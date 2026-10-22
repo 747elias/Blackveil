@@ -26,17 +26,25 @@ try {
 using System;
 using System.Runtime.InteropServices;
 public static class BlackveilInstallerProbe {
-    [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern IntPtr FindWindow(string cls, string title);
+    [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern IntPtr FindWindow(IntPtr cls, string title);
     [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr hwnd, uint msg, IntPtr wp, IntPtr lp);
 }
 '@
-    $controller = [BlackveilInstallerProbe]::FindWindow($null, 'Blackveil.Controller')
+    $startupClock = [Diagnostics.Stopwatch]::StartNew()
+    do {
+        $controller = [BlackveilInstallerProbe]::FindWindow([IntPtr]::Zero, 'Blackveil.Controller')
+        if ($controller -ne [IntPtr]::Zero -or $appProcess.HasExited) { break }
+        Start-Sleep -Milliseconds 100
+    } while ($startupClock.Elapsed.TotalSeconds -lt 15)
     if ($controller -eq [IntPtr]::Zero) { throw 'Tray-Controller fehlt.' }
     $second = Start-Process $installedExe -PassThru
     if (!$second.WaitForExit(10000) -or $second.ExitCode -ne 0) { throw 'Mutex verhindert zweite Instanz nicht.' }
     # Exercise the existing Windows session-end cleanup path; no app-only test command.
     [void][BlackveilInstallerProbe]::PostMessage($controller, 0x16, [IntPtr]1, [IntPtr]::Zero)
     if (!$appProcess.WaitForExit(10000) -or $appProcess.ExitCode -ne 0) { throw 'Sauberes Beenden fehlgeschlagen.' }
+} catch {
+    Get-Content "$env:LOCALAPPDATA/Blackveil/logs/*.log" -ErrorAction SilentlyContinue | Write-Host
+    throw
 } finally {
     if ($appProcess -and !$appProcess.HasExited) { Stop-Process -Id $appProcess.Id -Force }
     $uninstaller = Join-Path $installDir 'unins000.exe'
