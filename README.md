@@ -48,7 +48,7 @@ Unter Linux ist Cross-Build möglich (`dotnet build` und `dotnet publish ... -r 
 
 ## GitHub Actions und neue Releases
 
-`build.yml` baut bei jedem Push und Pull Request auf `windows-latest`, behandelt Warnungen als Fehler und führt Logik- sowie native Integrationstests aus. `release.yml` wiederholt diese Prüfung bei `v*`-Tags, installiert bei Bedarf Inno Setup, paketiert und veröffentlicht erst nach Prüfung aller vier Assets. Release Notes stammen aus dem passenden Abschnitt der `CHANGELOG.md`. Bei fehlgeschlagenem Upload bleibt ein neu erstelltes Release zunächst ein Entwurf.
+`build.yml` baut bei jedem Push und Pull Request auf `windows-latest`, behandelt Warnungen als Fehler und führt Logik- sowie native Integrationstests aus. `release.yml` wiederholt diese Prüfung bei `v*`-Tags, installiert bei Bedarf Inno Setup, paketiert, prüft die Installation/Deinstallation und veröffentlicht erst nach Prüfung aller vier Assets. Ein manueller Workflow-Start auf einem Branch prüft die Paketierung, ohne ein Release zu veröffentlichen. Release Notes stammen aus dem passenden Abschnitt der `CHANGELOG.md`. Bei fehlgeschlagenem Upload bleibt ein neu erstelltes Release zunächst ein Entwurf.
 
 Für eine neue Version `Version` in `Directory.Build.props` erhöhen und einen passenden `CHANGELOG.md`-Abschnitt ergänzen. Anschliessend zum Beispiel:
 
