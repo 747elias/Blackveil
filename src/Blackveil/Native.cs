@@ -17,9 +17,19 @@ internal static class Native
     {
         Input[] releases = initiallyHeld.Concat(new ushort[] { 0xA0, 0xA1, 0xA2, 0xA3, 0x51 }).Distinct()
             .Where(key => key is not (0x10 or 0x11 or 0x12)).Select(key => new Input
-        { Type = 1, Data = new InputUnion { Keyboard = new KeyboardInput { Key = key, Flags = 2 } } }).ToArray();
+        { Type = 1, Data = new InputUnion { Keyboard = new KeyboardInput { Key = key,
+            Flags = 2u | (key is 0xA3 or 0xA5 or 0x21 or 0x22 or 0x23 or 0x24 or 0x25 or 0x26 or 0x27 or 0x28 or 0x2C or 0x2D or 0x2E or 0x5B or 0x5C or 0x5D or 0x6F or 0x90 ? 1u : 0u) } } }).ToArray();
         if (SendInput((uint)releases.Length, releases, Marshal.SizeOf<Input>()) != releases.Length)
             Log.Write("Key-state cleanup was restricted by Windows (possibly UIPI).");
+    }
+    internal static void ReleaseActivationButtons(IEnumerable<int> initiallyHeld)
+    {
+        Input[] releases = initiallyHeld.Select(button => new Input { Type = 0,
+            Data = new InputUnion { Mouse = new MouseInput {
+                Flags = button switch { 1 => 0x4u, 2 => 0x10u, 4 => 0x40u, _ => 0x100u },
+                Data = button switch { 5 => 1u, 6 => 2u, _ => 0u } } } }).ToArray();
+        if (releases.Length > 0 && SendInput((uint)releases.Length, releases, Marshal.SizeOf<Input>()) != releases.Length)
+            Log.Write("Mouse-state cleanup was restricted by Windows (possibly UIPI).");
     }
     internal const int HotkeyId = 0x424C;
     internal const int ToggleMessage = 0x8001, FailureMessage = 0x8002;

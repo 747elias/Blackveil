@@ -10,7 +10,7 @@ Auf einer freien Windows-11-Testsitzung beginnen. Vor jedem Test wissen, dass Ct
 | Hook / Hotkey | Linke/rechte Ctrl-/Shift-Kombinationen, Q zuerst und zuletzt loslassen; 20 Zyklen | Jeder gültige neue Hotkey entsperrt; keine hängenden Modifikatoren danach |
 | Kollision | In separatem Tool Ctrl+Shift+Q registrieren, Blackveil starten | Verständliche Fehlermeldung; keine Fenster, keine Hooks zurückgelassen |
 | Tastatur | Notepad mit ungespeichertem Testtext im Hintergrund; Zeichen, Escape, Alt+F4, Win, Alt+Tab, Multimedia testen | Gewöhnliche Eingaben ändern den Hintergrund nicht; Escape/Alt+F4 beenden nicht; geschützte Systemfunktionen gesondert erfassen |
-| Maus | Vorher Klickzähler/Editor öffnen; klicken, doppelklicken, rechtsklicken, scrollen, bewegen | Keine Bedienung dahinter, kein Schliessen; Cursor unsichtbar und danach sichtbar |
+| Maus | Vorher Klickzähler/Editor öffnen; klicken, doppelklicken, rechtsklicken, scrollen, bewegen | Keine Bedienung dahinter, kein Schliessen; Cursor unsichtbar und danach sichtbar. Auch während eines bereits begonnenen Ziehvorgangs aktivieren; nach dem Verlassen bleiben keine Maustasten hängen |
 | Monitore / DPI | 100 %, 150 %, 200 % kombinieren; negative Koordinaten, Hochformat, primären Monitor wechseln | Jeder Monitor vollständig schwarz, inklusive Taskleiste; keine sichtbaren Ränder |
 | Hotplug | Im aktiven und inaktiven Modus Monitor/Dock anschliessen/entfernen, Auflösung ändern | Fenster passen sich an; kein festhängender Eingabeschutz |
 | Touch | Auf jedem Touchscreen tippen, doppeltippen, lang drücken, mehrere Finger, wischen, zoomen | Fenster verwerfen Touch/Gesten, kein Durchreichen oder Schliessen; OEM/Systemgesten als Grenze erfassen |

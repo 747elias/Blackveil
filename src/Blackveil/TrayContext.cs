@@ -110,6 +110,7 @@ internal sealed class TrayContext : ApplicationContext
     {
         bool hadHooks = hooks is not null;
         ushort[] initiallyHeld = hooks?.InitiallyHeldKeys ?? [];
+        int[] initiallyHeldButtons = hooks?.InitiallyHeldButtons ?? [];
         active = false;
         watchdog?.Dispose(); watchdog = null;
         heartbeat.Stop();
@@ -122,7 +123,11 @@ internal sealed class TrayContext : ApplicationContext
             {
                 windows.Clear();
                 if (cursorHidden) { Cursor.Show(); cursorHidden = false; }
-                if (hadHooks) Native.ReleaseActivationKeys(initiallyHeld);
+                if (hadHooks)
+                {
+                    Native.ReleaseActivationKeys(initiallyHeld);
+                    Native.ReleaseActivationButtons(initiallyHeldButtons);
+                }
             }
         }
     }

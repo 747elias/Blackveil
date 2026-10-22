@@ -13,6 +13,7 @@ internal sealed class InputHooks : IDisposable
     private nint keyboard, mouse, window;
     private KeyboardGate? gate;
     internal ushort[] InitiallyHeldKeys { get; private set; } = [];
+    internal int[] InitiallyHeldButtons { get; private set; } = [];
     private readonly Native.HookProc keyboardProc, mouseProc;
     private int disposed;
     internal bool IsAlive => thread.IsAlive;
@@ -42,6 +43,7 @@ internal sealed class InputHooks : IDisposable
             pump = new HookWindow();
             window = pump.Handle;
             InitiallyHeldKeys = Enumerable.Range(8, 247).Where(key => (Native.GetAsyncKeyState(key) & 0x8000) != 0).Select(key => (ushort)key).ToArray();
+            InitiallyHeldButtons = new[] { 1, 2, 4, 5, 6 }.Where(key => (Native.GetAsyncKeyState(key) & 0x8000) != 0).ToArray();
             // Generic modifier aliases are not reported by the LL hook; retain only sided variants.
             gate = new KeyboardGate(InitiallyHeldKeys.Where(key => key is not (0x10 or 0x11 or 0x12)).Select(key => (int)key));
             keyboard = Native.SetWindowsHookEx(13, keyboardProc, Native.GetModuleHandle(null), 0);

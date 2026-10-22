@@ -12,7 +12,7 @@ Im aktiven Zustand werden alle gewöhnlichen Tastaturereignisse konsumiert. Dahe
 
 Die Windows-Tests gehen durch die tatsächlichen nativen Hooks, nicht durch einen nachgebauten Test-Hook. Synthetische Eingaben sind dafür bewusst erlaubt; Blackveil stellt keine Sicherheitsgrenze dar.
 
-Nach Entfernen der Hooks werden Key-up-Ereignisse für zuvor gehaltene Tasten und die Hotkey-Tasten gesendet, um vor der Aktivierung durchgereichte Tastenzustände auszugleichen. Insbesondere wird auch Q freigegeben, damit MOD_NOREPEAT die nächste Aktivierung zulässt. Das ändert keine dauerhafte Eingabekonfiguration. UIPI kann dies bei erhöhten Anwendungen einschränken.
+Nach Entfernen der Hooks werden Key-up-Ereignisse für zuvor gehaltene Tasten und die Hotkey-Tasten sowie Mouse-up-Ereignisse für zuvor gehaltene Maustasten gesendet, um vor der Aktivierung durchgereichte Tastenzustände auszugleichen. Insbesondere wird auch Q freigegeben, damit MOD_NOREPEAT die nächste Aktivierung zulässt. Das ändert keine dauerhafte Eingabekonfiguration. UIPI kann dies bei erhöhten Anwendungen einschränken.
 
 ## Aufräumen und Grenzen
 
