@@ -11,6 +11,10 @@ internal static class Program
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
         using var receiver = new Receiver();
         InputHooks? hooks = null;
+        int observedKeys = 0, observedMouse = 0;
+        Native.HookProc keyObserver = (code, message, data) => { if (code >= 0) observedKeys++; return Native.CallNextHookEx(0, code, message, data); };
+        Native.HookProc mouseObserver = (code, message, data) => { if (code >= 0) observedMouse++; return Native.CallNextHookEx(0, code, message, data); };
+        nint observerKeyboard = 0, observerMouse = 0;
         try
         {
             Require(Native.RegisterHotKey(receiver.Handle, Native.HotkeyId, 0x4006, 0x51), "RegisterHotKey");
@@ -21,6 +25,9 @@ internal static class Program
             PumpFor(150);
             Require(receiver.Hotkeys == 1, "MOD_NOREPEAT");
             Release(); PumpFor(150);
+            observerKeyboard = Native.SetWindowsHookEx(13, keyObserver, Native.GetModuleHandle(null), 0);
+            observerMouse = Native.SetWindowsHookEx(14, mouseObserver, Native.GetModuleHandle(null), 0);
+            Require(observerKeyboard != 0 && observerMouse != 0, "Observer hooks");
             hooks = new InputHooks(receiver.Handle);
             Chord();
             for (int i = 0; i < 20; i++) Key(0x51, false);
@@ -29,8 +36,17 @@ internal static class Program
             Key(0x51, true);
             PumpUntil(() => receiver.Unlocks == 1, "Unlock bypasses suppressed WM_HOTKEY");
             Require(receiver.Hotkeys == 1, "Hook consumed chord before RegisterHotKey");
+            Native.Input[] mouse = [new() { Type = 0, Data = new Native.InputUnion { Mouse = new Native.MouseInput { Flags = 0x2 } } },
+                new() { Type = 0, Data = new Native.InputUnion { Mouse = new Native.MouseInput { Flags = 0x4 } } },
+                new() { Type = 0, Data = new Native.InputUnion { Mouse = new Native.MouseInput { Flags = 0x800, Data = 120 } } }];
+            Require(Native.SendInput(3, mouse, Marshal.SizeOf<Native.Input>()) == 3, "Mouse injection");
+            PumpFor(100);
+            Require(observedKeys == 0 && observedMouse == 0, "Product hooks must suppress downstream keyboard, clicks and wheel");
             hooks.Dispose(); hooks = null;
             Release(); PumpFor(150);
+            Require(observedKeys > 0, "Downstream input resumes after unhook");
+            Native.UnhookWindowsHookEx(observerKeyboard); observerKeyboard = 0;
+            Native.UnhookWindowsHookEx(observerMouse); observerMouse = 0;
             Chord(); PumpUntil(() => receiver.Hotkeys == 2, "Hotkey restored after unhook");
             Release();
             using var veil = new VeilWindow(Screen.PrimaryScreen!.Bounds, () => throw new InvalidOperationException("Unexpected veil destruction"));
@@ -38,14 +54,36 @@ internal static class Program
             PumpFor(100);
             veil.Close(); Require(!veil.IsDisposed, "Close must be rejected while active");
             veil.CloseVeil();
-            Console.WriteLine("PASS: native hotkey, collision, MOD_NOREPEAT, real LL hook unlock, unhook, protected overlay close.");
+            Native.UnregisterHotKey(receiver.Handle, Native.HotkeyId);
+            using (var app = new TrayContext())
+            {
+                for (int cycle = 0; cycle < 3; cycle++)
+                {
+                    Chord();
+                    PumpUntil(() => Application.OpenForms.Count == Screen.AllScreens.Length, "Full app activation covers enumerated monitors");
+                    Require(Application.OpenForms.Cast<Form>().All(form => form.TopMost && form.FormBorderStyle == FormBorderStyle.None), "All veils are borderless and topmost");
+                    Release(); PumpFor(150);
+                    Require(Application.OpenForms.Count == Screen.AllScreens.Length, "Initial chord release must not unlock");
+                    Key(0x1B, false); Key(0x1B, true); PumpFor(100);
+                    Require(Application.OpenForms.Count > 0, "Escape must not unlock");
+                    Chord(); Key(0x51, true);
+                    PumpUntil(() => Application.OpenForms.Count == 0, "Full app unlock and window cleanup");
+                    Require((Native.GetAsyncKeyState(0x51) & 0x8000) == 0, "Cleanup releases Q for the next MOD_NOREPEAT activation");
+                    Key(0xA0, true); Key(0xA2, true); PumpFor(100);
+                }
+                app.Stop();
+            }
+            Console.WriteLine("PASS: native hotkey, collision, MOD_NOREPEAT, real LL hook unlock, unhook, protected overlay close, three full tray-app cycles.");
             return 0;
         }
         catch (Exception e) { Console.Error.WriteLine(e); return 1; }
         finally
         {
             hooks?.Dispose(); Release();
+            if (observerKeyboard != 0) Native.UnhookWindowsHookEx(observerKeyboard);
+            if (observerMouse != 0) Native.UnhookWindowsHookEx(observerMouse);
             Native.UnregisterHotKey(receiver.Handle, Native.HotkeyId);
+            GC.KeepAlive(keyObserver); GC.KeepAlive(mouseObserver);
         }
     }
     private static void Chord() { Key(0xA2, false); Key(0xA0, false); Key(0x51, false); }
