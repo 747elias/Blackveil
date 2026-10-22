@@ -1,0 +1,65 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Require a version tag
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF -notmatch '^refs/tags/v\d+\.\d+\.\d+$') { throw 'Release muss auf einem Versionstag laufen.' }
+      - name: Build and test
+        shell: pwsh
+        run: |
+          dotnet build Blackveil.sln -c Release -warnaserror
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          dotnet test tests/Blackveil.Core.Tests -c Release --no-build
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          dotnet run --project tests/Blackveil.Windows.Tests -c Release --no-build
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          if (!(Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup --no-progress -y
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          }
+      - name: Package portable EXE, ZIP, installer and checksums
+        run: ./scripts/Package.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Blackveil-release
+          path: artifacts/release/*
+          if-no-files-found: error
+      - name: Publish GitHub Release and verify all assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag --verify-tag --title "Blackveil $($tag.TrimStart('v'))" --notes-file artifacts/release-notes.md --draft
+            if ($LASTEXITCODE) { throw 'Release konnte nicht erstellt werden.' }
+          }
+          gh release upload $tag artifacts/release/* --clobber
+          if ($LASTEXITCODE) { throw 'Upload fehlgeschlagen.' }
+          $release = gh release view $tag --json assets | ConvertFrom-Json
+          $version = $tag.TrimStart('v')
+          foreach ($name in @('Blackveil.exe', "Blackveil-Setup-$version.exe", "Blackveil-$version-win-x64.zip", 'SHA256SUMS.txt')) {
+            if ($name -notin $release.assets.name) { throw "Asset fehlt: $name" }
+          }
+          gh release edit $tag --draft=false --latest
+          if ($LASTEXITCODE) { throw 'Veröffentlichung fehlgeschlagen.' }
