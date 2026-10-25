@@ -4,13 +4,13 @@ Auf einer freien Windows-11-Testsitzung beginnen. Vor jedem Test wissen, dass Ct
 
 | Bereich | Durchführung | Erwartung |
 |---|---|---|
-| Tray / Instanz | EXE starten, nochmals starten, Info öffnen | Nur ein Tray-Symbol, kein Hauptfenster, Version 2.0.0 |
+| Tray / Instanz | EXE starten, nochmals starten, Info öffnen | Nur ein Tray-Symbol, kein Hauptfenster, Version 2.0.1 |
 | Globaler Hotkey | Notepad, Browser und Vollbild-App fokussieren; Ctrl+Shift+Q drücken | Schwarzbild aus jedem normalen Vordergrundprogramm |
 | Wiederholung | Q während des ersten Hotkeys zehn Sekunden halten, loslassen; erneut drücken und loslassen | Einmal an, erst durch zweite Betätigung aus; kein Flackern/Reaktivieren |
 | Hook / Hotkey | Linke/rechte Ctrl-/Shift-Kombinationen, Q zuerst und zuletzt loslassen; 20 Zyklen | Jeder gültige neue Hotkey entsperrt; keine hängenden Modifikatoren danach |
 | Einstellungen | Tray links anklicken; Aufnehmen; Ctrl+Alt+K drücken; Speichern; beenden/neustarten; Standard und Abbrechen prüfen | Kombination wird erkannt und bleibt nach Neustart erhalten; nur Speichern übernimmt; beide Umschaltpfade nutzen neuen Shortcut |
-| Shortcut-Konflikt | Belegten Shortcut in Einstellungen speichern | Fehlermeldung, bisherige Einstellung bleibt gültig |
-| Kollision | In separatem Tool Ctrl+Shift+Q registrieren, Blackveil starten | Verständliche Fehlermeldung; keine Fenster, keine Hooks zurückgelassen |
+| Shortcut-Konflikt | Belegten Shortcut in Einstellungen speichern | Neue Einstellung wird gespeichert, Hinweis erscheint; solange nicht registriert, bleibt Schwarzbild deaktiviert und Einstellungen erreichbar |
+| Kollision | In separatem Tool Ctrl+Shift+Q registrieren, Blackveil starten | Tray startet, Einstellungen zeigen Hinweis; keine Schwarzbildfenster oder Eingabe-Hooks aktiviert |
 | Tastatur | Notepad mit ungespeichertem Testtext im Hintergrund; Zeichen, Escape, Alt+F4, Win, Alt+Tab, Multimedia testen | Gewöhnliche Eingaben ändern den Hintergrund nicht; Escape/Alt+F4 beenden nicht; geschützte Systemfunktionen gesondert erfassen |
 | Maus | Vorher Klickzähler/Editor öffnen; klicken, doppelklicken, rechtsklicken, scrollen, bewegen | Keine Bedienung dahinter, kein Schliessen; Cursor unsichtbar und danach sichtbar. Auch während eines bereits begonnenen Ziehvorgangs aktivieren; nach dem Verlassen bleiben keine Maustasten hängen |
 | Monitore / DPI | 100 %, 150 %, 200 % kombinieren; negative Koordinaten, Hochformat, primären Monitor wechseln | Jeder Monitor vollständig schwarz, inklusive Taskleiste; keine sichtbaren Ränder |
@@ -33,3 +33,5 @@ Auf einer freien Windows-11-Testsitzung beginnen. Vor jedem Test wissen, dass Ct
 `dotnet run --project tests/Blackveil.Windows.Tests` registriert einen echten globalen Hotkey mit `MOD_NOREPEAT`, prüft Kollision und Auslösung über `SendInput`, installiert den produktiven Low-Level-Hook und verlangt dessen Entsperrnachricht bei gleichzeitig unterdrücktem `WM_HOTKEY`. Anschliessend wird der Hook entfernt und die normale Hotkey-Auslösung erneut geprüft. Nachgeschaltete Beobachter-Hooks müssen während des Schutzes keine Tastatur-, Klick- oder Radereignisse erhalten. Ein schwarzes Testfenster muss `Close()` abweisen und kontrolliert geschlossen werden können. Drei anschliessende vollständige Tray-App-Zyklen prüfen Aktivierung, Monitorfenster, Escape-Unterdrückung, Q-Zustandsbereinigung und erneute Aktivierung.
 
 Diese Tests belegen keine physische Touch-/Stiftverarbeitung, Bildschirmabdeckung, Mixed-DPI-Hotplug oder Standby. Diese Punkte bleiben auf echter Hardware zu prüfen. Auch ein erfolgreicher Windows-CI-Lauf ersetzt diese Tests nicht.
+
+Ab 2.0.1 zusätzlich Shift+K, F-Taste ohne Modifikatoren, F12, Win-Kombination, Escape, Tab, OEM-/Medientaste und Shift allein testen. Bei Systemkombinationen ohne Garantie auf Funktion: Auswahl und Speicherung müssen möglich bleiben. Im Konfliktfall App neu starten und die Einstellungen zur Korrektur verwenden.

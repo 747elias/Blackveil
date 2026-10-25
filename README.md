@@ -6,13 +6,13 @@ Vorübergehender Sicht- und Eingabeschutz für **Windows 11 x64**, geschrieben i
 
 ## Installation und Bedienung
 
-1. `Blackveil-Setup-2.0.0.exe` aus dem Release starten. Die Installation erfolgt pro Benutzer unter `%LOCALAPPDATA%\Programs\Blackveil`, ohne UAC-Erhöhung. Optional «Blackveil mit Windows starten» auswählen.
+1. `Blackveil-Setup-2.0.1.exe` aus dem Release starten. Die Installation erfolgt pro Benutzer unter `%LOCALAPPDATA%\Programs\Blackveil`, ohne UAC-Erhöhung. Optional «Blackveil mit Windows starten» auswählen.
 2. Alternativ `Blackveil.exe` in einem dauerhaften Ordner ablegen oder die portable ZIP entpacken und die EXE starten. Für portablen Autostart darf dieser Pfad anschliessend nicht verändert werden.
 3. **Ctrl + Shift + Q** aktiviert schwarze, randlose Fenster auf allen Monitoren. Den Hotkey erneut drücken und **die Haupttaste loslassen**, um den Modus zu beenden. Gehaltenes Q schaltet nicht mehrfach um.
-4. **Linksklick auf das Tray-Symbol** öffnet «Einstellungen». Mit «Shortcut aufnehmen» die gewünschte Kombination drücken und danach «Speichern» wählen. Mindestens Ctrl oder Alt plus Buchstabe, Ziffer oder F-Taste; F12 und Windows-Tasten sind ausgeschlossen. «Standard» stellt Ctrl + Shift + Q wieder her. Während der Einstellungen ist das Schwarzbild pausiert.
+4. **Linksklick auf das Tray-Symbol** öffnet «Einstellungen». Mit «Shortcut aufnehmen» die gewünschte Kombination drücken und danach «Speichern» wählen. Auch Shift-Kombinationen, einzelne Tasten, Windows-Tasten, F12 und Sondertasten sind auswählbar. Alternativ die Taste in der Liste wählen und Ctrl/Alt/Shift/Win ankreuzen. Einzelne Modifikatortasten werden beim Loslassen aufgenommen; der Aufnahme-Button bricht die Aufnahme ab. «Standard» stellt Ctrl + Shift + Q wieder her. Während der Einstellungen ist das Schwarzbild pausiert.
 5. Im Kontextmenü des Tray-Symbols: «Schwarzbild aktivieren», «Mit Windows starten», «Einstellungen», «Info» mit Version und «Beenden». Während des Schwarzbilds ist das Menü durch den Eingabeschutz nicht erreichbar.
 
-Ein bereits belegter Hotkey verhindert den Start mit einer verständlichen Fehlermeldung. Eine zweite Instanz beendet sich sofort. Ein Autostart zeigt nur das Tray-Symbol und aktiviert kein Schwarzbild.
+Ein belegter oder von Windows abgewiesener Hotkey bleibt gespeichert. Blackveil startet weiterhin im Tray; ein Hinweis in den Einstellungen erklärt die Einschränkung. Solange Windows die Registrierung ablehnt, ist die Schwarzbild-Aktivierung deaktiviert. Eine zweite Instanz beendet sich sofort. Ein Autostart zeigt nur das Tray-Symbol und aktiviert kein Schwarzbild.
 
 Die Dateien sind **nicht code-signiert**. Windows SmartScreen kann «Der Computer wurde durch Windows geschützt» anzeigen. Vor dem Ausführen Herkunft und SHA256-Prüfsummen überprüfen. Auf ARM64 ist diese Ausgabe höchstens über Windows-x64-Emulation nutzbar; es gibt kein natives ARM64-Release.
 
@@ -21,7 +21,7 @@ Get-FileHash .\Blackveil.exe -Algorithm SHA256
 Get-Content .\SHA256SUMS.txt
 ```
 
-Der gewählte Shortcut wird unter `%LOCALAPPDATA%\Blackveil\settings.json` gespeichert und beim nächsten Start geladen. Er gilt sowohl zum Aktivieren als auch zum Beenden. Belegte Kombinationen werden beim Speichern verständlich abgewiesen; Abbrechen verändert nichts. Während der Aufnahme werden keine Tastensequenzen protokolliert. Ohne gültige Einstellungsdatei gilt wieder der Standard-Shortcut.
+Der gewählte Shortcut wird unter `%LOCALAPPDATA%\Blackveil\settings.json` gespeichert und beim nächsten Start geladen. Er gilt sowohl zum Aktivieren als auch zum Beenden. Auch reservierte oder belegte Kombinationen dürfen gespeichert werden. Ein Hinweis warnt, dass Windows sie möglicherweise abfängt. Ohne erfolgreiche Registrierung wird kein Schwarzbild aktiviert. Ein erfolgreiches RegisterHotKey ist ebenfalls keine Garantie für geschützte Systemkombinationen. Schliessen ohne Speichern verwirft die noch nicht gespeicherte Auswahl. Während der Aufnahme werden keine Tastensequenzen protokolliert. Ohne gültige Einstellungsdatei gilt wieder der Standard-Shortcut.
 
 ## Deinstallation und Autostart
 

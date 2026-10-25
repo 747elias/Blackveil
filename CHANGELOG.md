@@ -1,5 +1,13 @@
 # Änderungsprotokoll
 
+## [2.0.1] - 2026-10-25
+
+- Freie Tastatur-Shortcut-Auswahl: auch Shift ohne Ctrl/Alt, einzelne Tasten, Win, F12 und Sondertasten.
+- Manuelle Tastenliste mit Ctrl-/Alt-/Shift-/Win-Checkboxen für vom System abgefangene Eingaben.
+- Einzelne Modifikatortasten durch Drücken und Loslassen aufnehmen; Escape ist ebenfalls auswählbar.
+- Belegte oder reservierte Shortcuts speichern, mit Hinweis statt Ablehnung. Bei fehlgeschlagener Registrierung bleibt Schwarzbild deaktiviert und die Tray-App zur Korrektur erreichbar.
+- Hook-Vergleich und automatisierte Tests für Shift-, Win-, Einzel- und Modifikatortasten erweitert.
+
 ## [2.0.0] - 2026-10-25
 
 - Einstellungsfenster per Linksklick auf das Tray-Symbol oder über «Einstellungen» im Kontextmenü.

@@ -85,5 +85,27 @@ public sealed class ConfigurableShortcutTests
     [InlineData(0x7B, 2u)]
     [InlineData(0xA2, 2u)]
     [InlineData(0x51, 8u)]
-    public void InvalidChordsAreRejected(int key, uint modifiers) => Assert.False(new Shortcut(key, modifiers).IsValid);
+    [InlineData(0x10, 0u)]
+    [InlineData(0x1B, 0u)]
+    public void AllStructurallyValidKeyboardShortcutsAreAllowed(int key, uint modifiers) => Assert.True(new Shortcut(key, modifiers).IsValid);
+    [Theory]
+    [InlineData(0, 0u)]
+    [InlineData(255, 0u)]
+    [InlineData(0x51, 16u)]
+    public void InvalidDataIsRejected(int key, uint modifiers) => Assert.False(new Shortcut(key, modifiers).IsValid);
+    [Theory]
+    [InlineData(0x41, 4u, 0xA0)]
+    [InlineData(0x7B, 0u, 0)]
+    [InlineData(0x41, 8u, 0x5B)]
+    [InlineData(0x10, 0u, 0)]
+    public void RelaxedShortcutsUnlockOnRelease(int key, uint modifiers, int modifierKey)
+    {
+        var gate = new KeyboardGate([], new Shortcut(key, modifiers));
+        if (modifierKey != 0) gate.Process(modifierKey, true);
+        int physicalKey = key == 0x10 ? 0xA1 : key;
+        Assert.False(gate.Process(physicalKey, true));
+        Assert.False(gate.Process(physicalKey, true));
+        Assert.True(gate.Process(physicalKey, false));
+        Assert.False(gate.Process(physicalKey, false));
+    }
 }

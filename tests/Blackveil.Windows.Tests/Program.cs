@@ -63,7 +63,8 @@ internal static class Program
             {
                 for (int cycle = 0; cycle < 3; cycle++)
                 {
-                    if (cycle == 1) RecordShortcut(app);
+                    if (cycle == 1) RecordShortcut(app, new Shortcut(0x4B, 3));
+                    if (cycle == 2) RecordShortcut(app, new Shortcut(0x4B, 4));
                     var selected = app.CurrentShortcut;
                     CustomChord(selected);
                     PumpUntil(() => Application.OpenForms.Count == Screen.AllScreens.Length, "Full app activation covers enumerated monitors");
@@ -80,10 +81,12 @@ internal static class Program
                 Require(store.Load() == app.CurrentShortcut, "Selected shortcut persists");
                 var blocked = new Shortcut(0x4D, 3);
                 Require(Native.RegisterHotKey(receiver.Handle, 99, blocked.Modifiers | 0x4000, (uint)blocked.Key), "Reserve conflicting shortcut");
-                bool rejected = false;
-                try { app.ApplyShortcut(blocked); } catch (System.ComponentModel.Win32Exception) { rejected = true; }
+                try { app.ApplyShortcut(blocked); }
                 finally { Native.UnregisterHotKey(receiver.Handle, 99); }
-                Require(rejected && app.CurrentShortcut == store.Load() && app.CurrentShortcut.Key == 0x4B, "Collision preserves previous shortcut and settings");
+                Require(app.CurrentShortcut == blocked && store.Load() == blocked && !app.CanActivate && app.ShortcutWarning is not null,
+                    "Unavailable shortcut is saved with a warning and cannot activate an input barrier");
+                app.ApplyShortcut(new Shortcut(0x4B, 3));
+                Require(app.CanActivate, "Working shortcut restores activation");
                 app.Stop();
             }
             using (var restarted = new TrayContext(store))
@@ -92,7 +95,7 @@ internal static class Program
                 restarted.Stop();
             }
             Directory.Delete(Path.GetDirectoryName(configPath)!, true);
-            Console.WriteLine("PASS: configurable shortcut recording, persistence, restart, collision rollback; native hotkey, collision, MOD_NOREPEAT, real LL hook unlock, unhook, protected overlay close, three full tray-app cycles.");
+            Console.WriteLine("PASS: configurable shortcut recording, persistence, restart, warning-only shortcut saving; native hotkey, collision, MOD_NOREPEAT, real LL hook unlock, unhook, protected overlay close, three full tray-app cycles.");
             return 0;
         }
         catch (Exception e) { Console.Error.WriteLine(e); return 1; }
@@ -106,7 +109,7 @@ internal static class Program
         }
     }
     private static IEnumerable<Control> Descendants(Control root) => root.Controls.Cast<Control>().SelectMany(child => new[] { child }.Concat(Descendants(child)));
-    private static void RecordShortcut(TrayContext app)
+    private static void RecordShortcut(TrayContext app, Shortcut target)
     {
         Exception? failure = null;
         int stage = 0, ticks = 0;
@@ -123,12 +126,12 @@ internal static class Program
                 {
                     dialog.Activate();
                     dialog.BeginRecording();
-                    CustomChord(new Shortcut(0x4B, 3));
+                    CustomChord(target);
                     stage = 1;
                 }
                 else
                 {
-                    if (dialog.Candidate != new Shortcut(0x4B, 3)) return;
+                    if (dialog.Candidate != target) return;
                     CustomRelease(dialog.Candidate);
                     stage = 2;
                     Descendants(dialog).OfType<Button>().Single(b => b.Text == "Speichern").PerformClick();
@@ -140,7 +143,7 @@ internal static class Program
         app.ShowSettings();
         driver.Stop();
         if (failure is not null) throw failure;
-        Require(app.CurrentShortcut == new Shortcut(0x4B, 3), "GUI applies shortcut");
+        Require(app.CurrentShortcut == target, "GUI applies shortcut");
     }
     private static void CustomChord(Shortcut shortcut)
     {

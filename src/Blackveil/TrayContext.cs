@@ -29,21 +29,25 @@ internal sealed class TrayContext : ApplicationContext
     private int hotkeyId = Native.HotkeyId;
     private SettingsWindow? settingsWindow;
     private bool hotkeySuspended;
+    private bool hotkeyAvailable;
+    private ToolStripItem? activationItem;
+    internal bool CanActivate => hotkeyAvailable;
+    internal string? ShortcutWarning => hotkeyAvailable ? null : "Windows konnte den Shortcut nicht registrieren. Er bleibt gespeichert, funktioniert möglicherweise nicht. Schwarzbild bleibt bis zu einer erfolgreichen Registrierung deaktiviert.";
+    private void UpdateShortcutStatus()
+    {
+        if (activationItem is not null) activationItem.Enabled = hotkeyAvailable;
+        tray.Text = hotkeyAvailable ? $"Blackveil – {shortcut}" : "Blackveil – Shortcut nicht verfügbar; Einstellungen öffnen";
+    }
     internal Shortcut CurrentShortcut => shortcut;
     internal TrayContext(SettingsStore? settings = null)
     {
         this.settings = settings ?? new SettingsStore();
         shortcut = this.settings.Load();
         messages = new MessageWindow(this);
-        if (!Native.RegisterHotKey(messages.Handle, hotkeyId, 0x4000 | shortcut.Modifiers, (uint)shortcut.Key))
-        {
-            int code = Marshal.GetLastWin32Error();
-            messages.DestroyHandle();
-            throw new Win32Exception(code, $"{shortcut} konnte nicht registriert werden. Der Hotkey ist möglicherweise bereits durch eine andere Anwendung belegt. Beende diese Anwendung und starte Blackveil erneut.");
-        }
+        hotkeyAvailable = Native.RegisterHotKey(messages.Handle, hotkeyId, 0x4000 | shortcut.EffectiveModifiers, (uint)shortcut.Key);
         icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath!) ?? (Icon)SystemIcons.Application.Clone();
         menu = new ContextMenuStrip();
-        menu.Items.Add("Schwarzbild aktivieren", null, (_, _) => Activate());
+        activationItem = menu.Items.Add("Schwarzbild aktivieren", null, (_, _) => Activate());
         var startup = new ToolStripMenuItem("Mit Windows starten") { CheckOnClick = false };
         startup.Click += (_, _) =>
         {
@@ -60,6 +64,7 @@ internal sealed class TrayContext : ApplicationContext
         menu.Items.Add("Info", null, (_, _) => MessageBox.Show($"Blackveil {Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)}\n\n{shortcut}: Schwarzbild ein/aus\n\nVorübergehender Sicht- und Eingabeschutz. Keine Windows-Sperre.\nCtrl + Alt + Entf und Sicherheitsdesktop bleiben verfügbar.", "Info – Blackveil", MessageBoxButtons.OK, MessageBoxIcon.Information));
         menu.Items.Add("Beenden", null, (_, _) => ExitThread());
         tray = new NotifyIcon { Icon = icon, Text = $"Blackveil – {shortcut}", ContextMenuStrip = menu, Visible = true };
+        UpdateShortcutStatus();
         tray.MouseClick += (_, e) => { if (e.Button == MouseButtons.Left) ShowSettings(); };
         desktopChanged = (_, _, _, _, _, _, _) => Native.PostMessage(messages.Handle, SafeStopMessage, 0, 0);
         desktopHook = Native.SetWinEventHook(0x20, 0x20, 0, desktopChanged, 0, 0, 0);
@@ -80,14 +85,13 @@ internal sealed class TrayContext : ApplicationContext
         if (!next.IsValid) throw new ArgumentException("Ungültiger Shortcut.");
         if (next == shortcut) return;
         int nextId = hotkeyId == Native.HotkeyId ? Native.HotkeyId + 1 : Native.HotkeyId;
-        if (!Native.RegisterHotKey(messages.Handle, nextId, next.Modifiers | 0x4000, (uint)next.Key))
-            throw new Win32Exception(Marshal.GetLastWin32Error(), $"{next} ist bereits belegt oder für Windows reserviert. Bitte einen anderen Shortcut wählen.");
+        bool registered = Native.RegisterHotKey(messages.Handle, nextId, next.EffectiveModifiers | 0x4000, (uint)next.Key);
         try { settings.Save(next); }
-        catch { Native.UnregisterHotKey(messages.Handle, nextId); throw; }
+        catch { if (registered) Native.UnregisterHotKey(messages.Handle, nextId); throw; }
         if (!hotkeySuspended) Native.UnregisterHotKey(messages.Handle, hotkeyId);
-        else Native.UnregisterHotKey(messages.Handle, nextId);
-        hotkeyId = nextId; shortcut = next;
-        tray.Text = $"Blackveil – {shortcut}";
+        else if (registered) Native.UnregisterHotKey(messages.Handle, nextId);
+        hotkeyId = nextId; shortcut = next; hotkeyAvailable = registered;
+        UpdateShortcutStatus();
     }
 
     internal void ShowSettings()
@@ -98,25 +102,24 @@ internal sealed class TrayContext : ApplicationContext
         hotkeySuspended = true;
         try
         {
-            using var dialog = new SettingsWindow(shortcut, ApplyShortcut);
+            using var dialog = new SettingsWindow(shortcut, ApplyShortcut, () => ShortcutWarning);
             settingsWindow = dialog;
             dialog.ShowDialog();
         }
         finally
         {
             settingsWindow = null; hotkeySuspended = false;
-            if (!stopping && !Native.RegisterHotKey(messages.Handle, hotkeyId, shortcut.Modifiers | 0x4000, (uint)shortcut.Key))
+            if (!stopping)
             {
-                Report("Der Shortcut konnte nicht erneut aktiviert werden. Blackveil wird sicher beendet.",
-                    new Win32Exception(Marshal.GetLastWin32Error()));
-                ExitThread();
+                hotkeyAvailable = Native.RegisterHotKey(messages.Handle, hotkeyId, shortcut.EffectiveModifiers | 0x4000, (uint)shortcut.Key);
+                UpdateShortcutStatus();
             }
         }
     }
 
     private void Activate()
     {
-        if (active || stopping || settingsWindow is not null) return;
+        if (active || stopping || settingsWindow is not null || !hotkeyAvailable) return;
         try
         {
             // All partial resources belong to Deactivate, including failed form creation.
