@@ -57,12 +57,12 @@ Für eine neue Version `Version` in `Directory.Build.props` erhöhen und einen p
 
 ```powershell
 git add Directory.Build.props CHANGELOG.md
-git commit -m "Release version 1.0.1"
+git commit -m "Release version 2.0.1"
 git push origin main
-git tag -a v1.0.1 -m "Blackveil 1.0.1"
-git push origin v1.0.1
+git tag -a v2.0.1 -m "Blackveil 2.0.1"
+git push origin v2.0.1
 gh run list --workflow release.yml
-gh release view v1.0.1 --json url,assets
+gh release view v2.0.1 --json url,assets
 ```
 
 Tag und zentrale Version müssen übereinstimmen. Die Workflows nutzen nur das kurzlebige `GITHUB_TOKEN` mit den nötigen Repository-Rechten. Lokal `gh auth login` verwenden; keine Zugangsdaten in Dateien oder Commits speichern. Einen fehlgeschlagenen Lauf über `gh run view <RUN-ID> --log-failed` untersuchen und nach einer Korrektur eine neue Version veröffentlichen. Ein unverändert fehlgeschlagener Infrastruktur-Lauf kann mit `gh run rerun <RUN-ID> --failed` erneut gestartet werden.
