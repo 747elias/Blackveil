@@ -6,9 +6,9 @@ Beim Aktivieren wird ein eigener STA-Thread mit Nachrichtenpumpe gestartet. Er i
 
 ## Zwei Hotkey-Pfade
 
-Im inaktiven Zustand löst `RegisterHotKey(MOD_CONTROL | MOD_SHIFT | MOD_NOREPEAT)` die Aktivierung aus. Beim Installieren liest der Hook nur den aktuellen Zustand der Hotkey-Tasten; das bereits gehaltene Q der Aktivierung wird nicht als neue Betätigung gewertet.
+Im inaktiven Zustand löst `RegisterHotKey` mit den gespeicherten Modifikatoren und `MOD_NOREPEAT` die Aktivierung aus. Standard ist Ctrl + Shift + Q. Beim Installieren liest der Hook nur den aktuellen Zustand der Hotkey-Tasten; das bereits gehaltene Q der Aktivierung wird nicht als neue Betätigung gewertet.
 
-Im aktiven Zustand werden alle gewöhnlichen Tastaturereignisse konsumiert. Daher kann Windows den registrierten Hotkey nicht zuverlässig erzeugen. Die getestete `KeyboardGate` erkennt im Hook selbst eine neue Ctrl+Shift+Q-Betätigung und postet die Entsperrnachricht **beim Loslassen von Q**. So kann das verbleibende Auto-Repeat nach dem Entfernen des Hooks nicht sofort wieder aktivieren. Kein Tasteninhalt wird gespeichert oder geloggt. Die Zustandsmenge lebt nur im aktiven Hook-Objekt.
+Im aktiven Zustand werden alle gewöhnlichen Tastaturereignisse konsumiert. Daher kann Windows den registrierten Hotkey nicht zuverlässig erzeugen. Die getestete `KeyboardGate` erkennt im Hook selbst eine neue Betätigung des gespeicherten Shortcuts und postet die Entsperrnachricht **beim Loslassen der Shortcut-Haupttaste**. So kann das verbleibende Auto-Repeat nach dem Entfernen des Hooks nicht sofort wieder aktivieren. Kein Tasteninhalt wird gespeichert oder geloggt. Die Zustandsmenge lebt nur im aktiven Hook-Objekt.
 
 Die Windows-Tests gehen durch die tatsächlichen nativen Hooks, nicht durch einen nachgebauten Test-Hook. Synthetische Eingaben sind dafür bewusst erlaubt; Blackveil stellt keine Sicherheitsgrenze dar.
 
@@ -21,3 +21,9 @@ Deaktivierung ist idempotent: aktiven Wächter stoppen, Hooks auf ihrem Besitzer
 Ein Desktopwechsel wird über `EVENT_SYSTEM_DESKTOPSWITCH` gemeldet; Power-/Sitzungsereignisse führen ebenfalls vorsorglich zur Deaktivierung. Der Hotkey bleibt registriert und kann danach erneut aktivieren. Verlust des Controller-HWND beim Posten einer Entsperrnachricht führt zum Prozessende. Ein Hook kann von Windows nach einem Timeout still entfernt werden; es gibt keine unterstützte API, um dies zuverlässig am Handle abzufragen. Kurze Callbacks, eigener Thread und der parallel registrierte Hotkey begrenzen dieses Risiko, können aber keine Systemgarantie geben.
 
 `try/finally`, `Application.ThreadException` und `AppDomain.UnhandledException` decken behandelbare Fehler ab. Bei hartem Abbruch laufen Handler nicht garantiert; Windows entfernt prozesseigene HWNDs und Hooks. Sicherheitsdesktop, UAC, geschützte Eingaben, erhöhte Prozesse und andere Integritätsstufen bleiben ausserhalb einer vollständigen Garantie. Es gibt weder Treiber noch `BlockInput` noch globale Einstellungsänderungen.
+
+## Einstellungen ab Version 2
+
+Linksklick auf das Tray-Symbol oder «Einstellungen» im Kontextmenü öffnet einen Dialog. Der globale Hotkey wird während des Dialogs abgemeldet, damit auch der bisherige Shortcut aufgenommen werden kann. `ProcessCmdKey` verarbeitet die Aufnahme im fokussierten Dialog; es wird kein zusätzlicher globaler Aufnahme-Hook installiert. Escape bricht die Aufnahme ab, Abbrechen verwirft Änderungen, Standard setzt nur den Entwurf zurück.
+
+Vor dem Speichern reserviert der Controller die neue Kombination bei Windows. Erst nach erfolgreichem atomarem Schreiben von `%LOCALAPPDATA%\Blackveil\settings.json` wird die bisherige Konfiguration ersetzt. Bei Konflikten oder Schreibfehlern bleibt die alte Einstellung erhalten. Nach Schliessen des Dialogs wird der gewählte Shortcut erneut registriert. Falls diese Registrierung unerwartet verloren geht, wird die App sicher beendet. Hook und Windows-Registrierung verwenden denselben `Shortcut`-Wert; die GUI erlaubt nur validierte Ctrl-/Alt-/Shift-Kombinationen. Die Einstellungsdatei enthält nur den Shortcut, keine Tastensequenzen.

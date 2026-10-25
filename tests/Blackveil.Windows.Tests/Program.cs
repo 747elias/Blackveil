@@ -118,6 +118,7 @@ internal static class Program
             {
                 if (++ticks > 50) throw new TimeoutException("Shortcut recording UI");
                 if (dialog is null) return;
+                if (stage == 2) throw new InvalidOperationException("Settings save did not close the dialog");
                 if (stage == 0)
                 {
                     dialog.BeginRecording();
@@ -128,7 +129,7 @@ internal static class Program
                 {
                     Require(dialog.Candidate == new Shortcut(0x4B, 3), "GUI captures real Ctrl+Alt+K input");
                     CustomRelease(dialog.Candidate);
-                    driver.Stop();
+                    stage = 2;
                     Descendants(dialog).OfType<Button>().Single(b => b.Text == "Speichern").PerformClick();
                 }
             }
