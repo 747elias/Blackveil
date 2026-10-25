@@ -4,10 +4,12 @@ Auf einer freien Windows-11-Testsitzung beginnen. Vor jedem Test wissen, dass Ct
 
 | Bereich | Durchführung | Erwartung |
 |---|---|---|
-| Tray / Instanz | EXE starten, nochmals starten, Info öffnen | Nur ein Tray-Symbol, kein Hauptfenster, Version 1.0.0 |
+| Tray / Instanz | EXE starten, nochmals starten, Info öffnen | Nur ein Tray-Symbol, kein Hauptfenster, Version 2.0.0 |
 | Globaler Hotkey | Notepad, Browser und Vollbild-App fokussieren; Ctrl+Shift+Q drücken | Schwarzbild aus jedem normalen Vordergrundprogramm |
 | Wiederholung | Q während des ersten Hotkeys zehn Sekunden halten, loslassen; erneut drücken und loslassen | Einmal an, erst durch zweite Betätigung aus; kein Flackern/Reaktivieren |
 | Hook / Hotkey | Linke/rechte Ctrl-/Shift-Kombinationen, Q zuerst und zuletzt loslassen; 20 Zyklen | Jeder gültige neue Hotkey entsperrt; keine hängenden Modifikatoren danach |
+| Einstellungen | Tray links anklicken; Aufnehmen; Ctrl+Alt+K drücken; Speichern; beenden/neustarten; Standard und Abbrechen prüfen | Kombination wird erkannt und bleibt nach Neustart erhalten; nur Speichern übernimmt; beide Umschaltpfade nutzen neuen Shortcut |
+| Shortcut-Konflikt | Belegten Shortcut in Einstellungen speichern | Fehlermeldung, bisherige Einstellung bleibt gültig |
 | Kollision | In separatem Tool Ctrl+Shift+Q registrieren, Blackveil starten | Verständliche Fehlermeldung; keine Fenster, keine Hooks zurückgelassen |
 | Tastatur | Notepad mit ungespeichertem Testtext im Hintergrund; Zeichen, Escape, Alt+F4, Win, Alt+Tab, Multimedia testen | Gewöhnliche Eingaben ändern den Hintergrund nicht; Escape/Alt+F4 beenden nicht; geschützte Systemfunktionen gesondert erfassen |
 | Maus | Vorher Klickzähler/Editor öffnen; klicken, doppelklicken, rechtsklicken, scrollen, bewegen | Keine Bedienung dahinter, kein Schliessen; Cursor unsichtbar und danach sichtbar. Auch während eines bereits begonnenen Ziehvorgangs aktivieren; nach dem Verlassen bleiben keine Maustasten hängen |

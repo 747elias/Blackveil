@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Blackveil.Core;
+using Shortcut = Blackveil.Core.Shortcut;
 
 namespace Blackveil;
 
@@ -9,6 +10,7 @@ internal sealed class InputHooks : IDisposable
     private readonly Thread thread;
     private readonly ManualResetEventSlim ready = new();
     private readonly nint owner;
+    private readonly Shortcut shortcut;
     private Exception? startupError;
     private nint keyboard, mouse, window;
     private KeyboardGate? gate;
@@ -18,9 +20,10 @@ internal sealed class InputHooks : IDisposable
     private int disposed;
     internal bool IsAlive => thread.IsAlive;
 
-    internal InputHooks(nint owner)
+    internal InputHooks(nint owner, Shortcut? shortcut = null)
     {
         this.owner = owner;
+        this.shortcut = shortcut ?? Shortcut.Default;
         keyboardProc = KeyboardCallback;
         mouseProc = MouseCallback;
         thread = new Thread(Run) { IsBackground = true, Name = "Blackveil input hooks" };
@@ -45,7 +48,7 @@ internal sealed class InputHooks : IDisposable
             InitiallyHeldKeys = Enumerable.Range(8, 247).Where(key => (Native.GetAsyncKeyState(key) & 0x8000) != 0).Select(key => (ushort)key).ToArray();
             InitiallyHeldButtons = new[] { 1, 2, 4, 5, 6 }.Where(key => (Native.GetAsyncKeyState(key) & 0x8000) != 0).ToArray();
             // Generic modifier aliases are not reported by the LL hook; retain only sided variants.
-            gate = new KeyboardGate(InitiallyHeldKeys.Where(key => key is not (0x10 or 0x11 or 0x12)).Select(key => (int)key));
+            gate = new KeyboardGate(InitiallyHeldKeys.Where(key => key is not (0x10 or 0x11 or 0x12)).Select(key => (int)key), shortcut);
             keyboard = Native.SetWindowsHookEx(13, keyboardProc, Native.GetModuleHandle(null), 0);
             if (keyboard == 0) throw new Win32Exception(Marshal.GetLastWin32Error());
             mouse = Native.SetWindowsHookEx(14, mouseProc, Native.GetModuleHandle(null), 0);

@@ -6,10 +6,11 @@ Vorübergehender Sicht- und Eingabeschutz für **Windows 11 x64**, geschrieben i
 
 ## Installation und Bedienung
 
-1. `Blackveil-Setup-1.0.0.exe` aus dem Release starten. Die Installation erfolgt pro Benutzer unter `%LOCALAPPDATA%\Programs\Blackveil`, ohne UAC-Erhöhung. Optional «Blackveil mit Windows starten» auswählen.
+1. `Blackveil-Setup-2.0.0.exe` aus dem Release starten. Die Installation erfolgt pro Benutzer unter `%LOCALAPPDATA%\Programs\Blackveil`, ohne UAC-Erhöhung. Optional «Blackveil mit Windows starten» auswählen.
 2. Alternativ `Blackveil.exe` in einem dauerhaften Ordner ablegen oder die portable ZIP entpacken und die EXE starten. Für portablen Autostart darf dieser Pfad anschliessend nicht verändert werden.
-3. **Ctrl + Shift + Q** aktiviert schwarze, randlose Fenster auf allen Monitoren. Den Hotkey erneut drücken und **Q loslassen**, um den Modus zu beenden. Gehaltenes Q schaltet nicht mehrfach um.
-4. Im Kontextmenü des Tray-Symbols: «Schwarzbild aktivieren», «Mit Windows starten», «Info» mit Version und «Beenden». Während des Schwarzbilds ist das Menü durch den Eingabeschutz nicht erreichbar.
+3. **Ctrl + Shift + Q** aktiviert schwarze, randlose Fenster auf allen Monitoren. Den Hotkey erneut drücken und **die Haupttaste loslassen**, um den Modus zu beenden. Gehaltenes Q schaltet nicht mehrfach um.
+4. **Linksklick auf das Tray-Symbol** öffnet «Einstellungen». Mit «Shortcut aufnehmen» die gewünschte Kombination drücken und danach «Speichern» wählen. Mindestens Ctrl oder Alt plus Buchstabe, Ziffer oder F-Taste; F12 und Windows-Tasten sind ausgeschlossen. «Standard» stellt Ctrl + Shift + Q wieder her. Während der Einstellungen ist das Schwarzbild pausiert.
+5. Im Kontextmenü des Tray-Symbols: «Schwarzbild aktivieren», «Mit Windows starten», «Einstellungen», «Info» mit Version und «Beenden». Während des Schwarzbilds ist das Menü durch den Eingabeschutz nicht erreichbar.
 
 Ein bereits belegter Hotkey verhindert den Start mit einer verständlichen Fehlermeldung. Eine zweite Instanz beendet sich sofort. Ein Autostart zeigt nur das Tray-Symbol und aktiviert kein Schwarzbild.
 
@@ -20,9 +21,11 @@ Get-FileHash .\Blackveil.exe -Algorithm SHA256
 Get-Content .\SHA256SUMS.txt
 ```
 
+Der gewählte Shortcut wird unter `%LOCALAPPDATA%\Blackveil\settings.json` gespeichert und beim nächsten Start geladen. Er gilt sowohl zum Aktivieren als auch zum Beenden. Belegte Kombinationen werden beim Speichern verständlich abgewiesen; Abbrechen verändert nichts. Während der Aufnahme werden keine Tastensequenzen protokolliert. Ohne gültige Einstellungsdatei gilt wieder der Standard-Shortcut.
+
 ## Deinstallation und Autostart
 
-Zuerst den Schwarzbild-Modus mit dem Hotkey verlassen und Blackveil über das Tray-Menü beenden. Danach unter Windows «Einstellungen → Apps → Installierte Apps → Blackveil» deinstallieren. Der Installer fordert beim laufenden Programm zum Beenden auf. Alle eigenen Run-Einträge und Logs werden entfernt. Andere Run-Werte bleiben erhalten.
+Zuerst den Schwarzbild-Modus mit dem Hotkey verlassen und Blackveil über das Tray-Menü beenden. Danach unter Windows «Einstellungen → Apps → Installierte Apps → Blackveil» deinstallieren. Der Installer fordert beim laufenden Programm zum Beenden auf. Alle eigenen Run-Einträge und Logs sowie die Einstellungsdatei werden entfernt. Andere Run-Werte bleiben erhalten.
 
 Menü und Installer verwenden denselben Wert `Blackveil` unter `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`. Der Inhalt ist `"<vollständiger EXE-Pfad>" --autostart`. Der Installer liest den tatsächlichen Wert für seine Vorauswahl; eine explizite `/TASKS=autostart`-Auswahl wird respektiert. Bei einer portablen Ausgabe vor dem Löschen der EXE «Mit Windows starten» ausschalten; bei Bedarf den genannten Registry-Wert manuell entfernen.
 

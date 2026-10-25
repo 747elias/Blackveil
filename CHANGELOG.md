@@ -1,5 +1,14 @@
 # Änderungsprotokoll
 
+## [2.0.0] - 2026-10-25
+
+- Einstellungsfenster per Linksklick auf das Tray-Symbol oder über «Einstellungen» im Kontextmenü.
+- Shortcut durch Drücken aufnehmen, auf Standard zurücksetzen und dauerhaft speichern.
+- Unterstützt Ctrl-/Alt-/Shift-Kombinationen mit Buchstaben, Ziffern und F-Tasten (ausser F12).
+- Kollisionsprüfung vor Übernahme; bisheriger Shortcut bleibt bei Fehlern erhalten.
+- Konfigurierter Shortcut gilt für Windows-Registrierung, Eingabe-Hook, Info und Tray-Hinweis.
+- Erweiterte Windows-Tests für echte GUI-Tastenaufnahme, Speicherung, Neustart und Konfliktbehandlung.
+
 ## [1.0.0] - 2026-10-22
 
 - Erste Version für Windows 11 x64 mit .NET 10 LTS und WinForms.

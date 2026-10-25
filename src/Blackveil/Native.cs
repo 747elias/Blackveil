@@ -13,9 +13,9 @@ internal static class Native
     [StructLayout(LayoutKind.Sequential)] internal struct KeyboardInput { internal ushort Key, Scan; internal uint Flags, Time; internal nuint Extra; }
     [StructLayout(LayoutKind.Sequential)] internal struct MouseInput { internal int X, Y; internal uint Data, Flags, Time; internal nuint Extra; }
     [DllImport("user32.dll", SetLastError = true)] internal static extern uint SendInput(uint count, Input[] inputs, int size);
-    internal static void ReleaseActivationKeys(IEnumerable<ushort> initiallyHeld)
+    internal static void ReleaseActivationKeys(IEnumerable<ushort> initiallyHeld, Blackveil.Core.Shortcut shortcut)
     {
-        Input[] releases = initiallyHeld.Concat(new ushort[] { 0xA0, 0xA1, 0xA2, 0xA3, 0x51 }).Distinct()
+        Input[] releases = initiallyHeld.Concat(new ushort[] { 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, (ushort)shortcut.Key }).Distinct()
             .Where(key => key is not (0x10 or 0x11 or 0x12)).Select(key => new Input
         { Type = 1, Data = new InputUnion { Keyboard = new KeyboardInput { Key = key,
             Flags = 2u | (key is 0xA3 or 0xA5 or 0x21 or 0x22 or 0x23 or 0x24 or 0x25 or 0x26 or 0x27 or 0x28 or 0x2C or 0x2D or 0x2E or 0x5B or 0x5C or 0x5D or 0x6F or 0x90 ? 1u : 0u) } } }).ToArray();

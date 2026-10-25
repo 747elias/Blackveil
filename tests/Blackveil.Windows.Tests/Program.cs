@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Blackveil;
+using Blackveil.Core;
+using Shortcut = Blackveil.Core.Shortcut;
 
 // Real user32 integration. Run only in an unlocked interactive Windows session.
 internal static class Program
@@ -55,25 +57,42 @@ internal static class Program
             veil.Close(); Require(!veil.IsDisposed, "Close must be rejected while active");
             veil.CloseVeil();
             Native.UnregisterHotKey(receiver.Handle, Native.HotkeyId);
-            using (var app = new TrayContext())
+            string configPath = Path.Combine(Path.GetTempPath(), "Blackveil-tests-" + Guid.NewGuid(), "settings.json");
+            var store = new SettingsStore(configPath);
+            using (var app = new TrayContext(store))
             {
                 for (int cycle = 0; cycle < 3; cycle++)
                 {
-                    Chord();
+                    if (cycle == 1) RecordShortcut(app);
+                    var selected = app.CurrentShortcut;
+                    CustomChord(selected);
                     PumpUntil(() => Application.OpenForms.Count == Screen.AllScreens.Length, "Full app activation covers enumerated monitors");
                     Require(Application.OpenForms.Cast<Form>().All(form => form.TopMost && form.FormBorderStyle == FormBorderStyle.None), "All veils are borderless and topmost");
-                    Release(); PumpFor(150);
+                    CustomRelease(selected); PumpFor(150);
                     Require(Application.OpenForms.Count == Screen.AllScreens.Length, "Initial chord release must not unlock");
                     Key(0x1B, false); Key(0x1B, true); PumpFor(100);
                     Require(Application.OpenForms.Count > 0, "Escape must not unlock");
-                    Chord(); Key(0x51, true);
+                    CustomChord(selected); Key((ushort)selected.Key, true);
                     PumpUntil(() => Application.OpenForms.Count == 0, "Full app unlock and window cleanup");
-                    Require((Native.GetAsyncKeyState(0x51) & 0x8000) == 0, "Cleanup releases Q for the next MOD_NOREPEAT activation");
-                    Key(0xA0, true); Key(0xA2, true); PumpFor(100);
+                    Require((Native.GetAsyncKeyState(selected.Key) & 0x8000) == 0, "Cleanup releases Q for the next MOD_NOREPEAT activation");
+                    CustomRelease(selected); PumpFor(100);
                 }
+                Require(store.Load() == app.CurrentShortcut, "Selected shortcut persists");
+                var blocked = new Shortcut(0x4D, 3);
+                Require(Native.RegisterHotKey(receiver.Handle, 99, blocked.Modifiers | 0x4000, (uint)blocked.Key), "Reserve conflicting shortcut");
+                bool rejected = false;
+                try { app.ApplyShortcut(blocked); } catch (System.ComponentModel.Win32Exception) { rejected = true; }
+                finally { Native.UnregisterHotKey(receiver.Handle, 99); }
+                Require(rejected && app.CurrentShortcut == store.Load() && app.CurrentShortcut.Key == 0x4B, "Collision preserves previous shortcut and settings");
                 app.Stop();
             }
-            Console.WriteLine("PASS: native hotkey, collision, MOD_NOREPEAT, real LL hook unlock, unhook, protected overlay close, three full tray-app cycles.");
+            using (var restarted = new TrayContext(store))
+            {
+                Require(restarted.CurrentShortcut == new Shortcut(0x4B, 3), "Restart restores saved shortcut");
+                restarted.Stop();
+            }
+            Directory.Delete(Path.GetDirectoryName(configPath)!, true);
+            Console.WriteLine("PASS: configurable shortcut recording, persistence, restart, collision rollback; native hotkey, collision, MOD_NOREPEAT, real LL hook unlock, unhook, protected overlay close, three full tray-app cycles.");
             return 0;
         }
         catch (Exception e) { Console.Error.WriteLine(e); return 1; }
@@ -85,6 +104,53 @@ internal static class Program
             Native.UnregisterHotKey(receiver.Handle, Native.HotkeyId);
             GC.KeepAlive(keyObserver); GC.KeepAlive(mouseObserver);
         }
+    }
+    private static IEnumerable<Control> Descendants(Control root) => root.Controls.Cast<Control>().SelectMany(child => new[] { child }.Concat(Descendants(child)));
+    private static void RecordShortcut(TrayContext app)
+    {
+        Exception? failure = null;
+        int stage = 0, ticks = 0;
+        using var driver = new System.Windows.Forms.Timer { Interval = 100 };
+        driver.Tick += (_, _) =>
+        {
+            var dialog = Application.OpenForms.OfType<SettingsWindow>().SingleOrDefault();
+            try
+            {
+                if (++ticks > 50) throw new TimeoutException("Shortcut recording UI");
+                if (dialog is null) return;
+                if (stage == 0)
+                {
+                    dialog.BeginRecording();
+                    CustomChord(new Shortcut(0x4B, 3));
+                    stage = 1;
+                }
+                else
+                {
+                    Require(dialog.Candidate == new Shortcut(0x4B, 3), "GUI captures real Ctrl+Alt+K input");
+                    CustomRelease(dialog.Candidate);
+                    driver.Stop();
+                    Descendants(dialog).OfType<Button>().Single(b => b.Text == "Speichern").PerformClick();
+                }
+            }
+            catch (Exception error) { failure = error; driver.Stop(); dialog?.Close(); }
+        };
+        driver.Start();
+        app.ShowSettings();
+        driver.Stop();
+        if (failure is not null) throw failure;
+        Require(app.CurrentShortcut == new Shortcut(0x4B, 3), "GUI applies shortcut");
+    }
+    private static void CustomChord(Shortcut shortcut)
+    {
+        if ((shortcut.Modifiers & 2) != 0) Key(0xA2, false);
+        if ((shortcut.Modifiers & 1) != 0) Key(0xA4, false);
+        if ((shortcut.Modifiers & 4) != 0) Key(0xA0, false);
+        Key((ushort)shortcut.Key, false);
+    }
+    private static void CustomRelease(Shortcut shortcut)
+    {
+        Key((ushort)shortcut.Key, true);
+        Key(0xA0, true); Key(0xA2, true); Key(0xA4, true);
     }
     private static void Chord() { Key(0xA2, false); Key(0xA0, false); Key(0x51, false); }
     private static void Release() { Key(0x51, true); Key(0xA0, true); Key(0xA2, true); }

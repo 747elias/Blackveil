@@ -5,21 +5,29 @@ public sealed class KeyboardGate
 {
     private readonly HashSet<int> down = [];
     private bool unlockOnRelease;
-    public KeyboardGate(IEnumerable<int> initiallyDown) => down.UnionWith(initiallyDown);
+    private readonly Shortcut shortcut;
+    public KeyboardGate(IEnumerable<int> initiallyDown, Shortcut? shortcut = null)
+    {
+        this.shortcut = shortcut ?? Shortcut.Default;
+        if (!this.shortcut.IsValid) throw new ArgumentException("Ungültiger Shortcut.", nameof(shortcut));
+        down.UnionWith(initiallyDown);
+    }
+    private bool Held(int generic, int left, int right) => down.Contains(generic) || down.Contains(left) || down.Contains(right);
 
     public bool Process(int key, bool isDown)
     {
         if (!isDown)
         {
             down.Remove(key);
-            if (key != 0x51 || !unlockOnRelease) return false;
+            if (key != shortcut.Key || !unlockOnRelease) return false;
             unlockOnRelease = false;
             return true;
         }
         bool first = down.Add(key);
-        if (first && key == 0x51 &&
-            (down.Contains(0x11) || down.Contains(0xA2) || down.Contains(0xA3)) &&
-            (down.Contains(0x10) || down.Contains(0xA0) || down.Contains(0xA1))) unlockOnRelease = true;
+        uint modifiers = (Held(0x11, 0xA2, 0xA3) ? 2u : 0u) |
+            (Held(0x10, 0xA0, 0xA1) ? 4u : 0u) | (Held(0x12, 0xA4, 0xA5) ? 1u : 0u);
+        if (first && key == shortcut.Key && modifiers == shortcut.Modifiers &&
+            !down.Contains(0x5B) && !down.Contains(0x5C)) unlockOnRelease = true;
         return false;
     }
 }

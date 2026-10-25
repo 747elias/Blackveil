@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
+using Blackveil.Core;
+using Shortcut = Blackveil.Core.Shortcut;
 
 namespace Blackveil;
 
@@ -22,14 +24,22 @@ internal sealed class TrayContext : ApplicationContext
     private System.Threading.Timer? watchdog;
     private readonly System.Windows.Forms.Timer heartbeat = new() { Interval = 1000 };
     private long lastHeartbeat;
-    internal TrayContext()
+    private readonly SettingsStore settings;
+    private Shortcut shortcut;
+    private int hotkeyId = Native.HotkeyId;
+    private SettingsWindow? settingsWindow;
+    private bool hotkeySuspended;
+    internal Shortcut CurrentShortcut => shortcut;
+    internal TrayContext(SettingsStore? settings = null)
     {
+        this.settings = settings ?? new SettingsStore();
+        shortcut = this.settings.Load();
         messages = new MessageWindow(this);
-        if (!Native.RegisterHotKey(messages.Handle, Native.HotkeyId, 0x4000 | 0x2 | 0x4, 0x51))
+        if (!Native.RegisterHotKey(messages.Handle, hotkeyId, 0x4000 | shortcut.Modifiers, (uint)shortcut.Key))
         {
             int code = Marshal.GetLastWin32Error();
             messages.DestroyHandle();
-            throw new Win32Exception(code, "Ctrl + Shift + Q konnte nicht registriert werden. Der Hotkey ist möglicherweise bereits durch eine andere Anwendung belegt. Beende diese Anwendung und starte Blackveil erneut.");
+            throw new Win32Exception(code, $"{shortcut} konnte nicht registriert werden. Der Hotkey ist möglicherweise bereits durch eine andere Anwendung belegt. Beende diese Anwendung und starte Blackveil erneut.");
         }
         icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath!) ?? (Icon)SystemIcons.Application.Clone();
         menu = new ContextMenuStrip();
@@ -46,9 +56,11 @@ internal sealed class TrayContext : ApplicationContext
             try { startup.Checked = Startup.Enabled; }
             catch (Exception error) { Report("Autostart konnte nicht gelesen werden.", error); }
         };
-        menu.Items.Add("Info", null, (_, _) => MessageBox.Show($"Blackveil {Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)}\n\nCtrl + Shift + Q: Schwarzbild ein/aus\n\nVorübergehender Sicht- und Eingabeschutz. Keine Windows-Sperre.\nCtrl + Alt + Entf und Sicherheitsdesktop bleiben verfügbar.", "Info – Blackveil", MessageBoxButtons.OK, MessageBoxIcon.Information));
+        menu.Items.Add("Einstellungen …", null, (_, _) => ShowSettings());
+        menu.Items.Add("Info", null, (_, _) => MessageBox.Show($"Blackveil {Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)}\n\n{shortcut}: Schwarzbild ein/aus\n\nVorübergehender Sicht- und Eingabeschutz. Keine Windows-Sperre.\nCtrl + Alt + Entf und Sicherheitsdesktop bleiben verfügbar.", "Info – Blackveil", MessageBoxButtons.OK, MessageBoxIcon.Information));
         menu.Items.Add("Beenden", null, (_, _) => ExitThread());
-        tray = new NotifyIcon { Icon = icon, Text = "Blackveil – Ctrl + Shift + Q", ContextMenuStrip = menu, Visible = true };
+        tray = new NotifyIcon { Icon = icon, Text = $"Blackveil – {shortcut}", ContextMenuStrip = menu, Visible = true };
+        tray.MouseClick += (_, e) => { if (e.Button == MouseButtons.Left) ShowSettings(); };
         desktopChanged = (_, _, _, _, _, _, _) => Native.PostMessage(messages.Handle, SafeStopMessage, 0, 0);
         desktopHook = Native.SetWinEventHook(0x20, 0x20, 0, desktopChanged, 0, 0, 0);
         if (desktopHook == 0) { Stop(); throw new InvalidOperationException("Desktop-Wechsel können nicht überwacht werden."); }
@@ -62,13 +74,53 @@ internal sealed class TrayContext : ApplicationContext
         };
     }
 
-    private void Activate()
+    internal void ApplyShortcut(Shortcut next)
+    {
+        if (active) throw new InvalidOperationException("Shortcut kann nur bei ausgeschaltetem Schwarzbild geändert werden.");
+        if (!next.IsValid) throw new ArgumentException("Ungültiger Shortcut.");
+        if (next == shortcut) return;
+        int nextId = hotkeyId == Native.HotkeyId ? Native.HotkeyId + 1 : Native.HotkeyId;
+        if (!Native.RegisterHotKey(messages.Handle, nextId, next.Modifiers | 0x4000, (uint)next.Key))
+            throw new Win32Exception(Marshal.GetLastWin32Error(), $"{next} ist bereits belegt oder für Windows reserviert. Bitte einen anderen Shortcut wählen.");
+        try { settings.Save(next); }
+        catch { Native.UnregisterHotKey(messages.Handle, nextId); throw; }
+        if (!hotkeySuspended) Native.UnregisterHotKey(messages.Handle, hotkeyId);
+        else Native.UnregisterHotKey(messages.Handle, nextId);
+        hotkeyId = nextId; shortcut = next;
+        tray.Text = $"Blackveil – {shortcut}";
+    }
+
+    internal void ShowSettings()
     {
         if (active || stopping) return;
+        if (settingsWindow is not null) { settingsWindow.Activate(); return; }
+        Native.UnregisterHotKey(messages.Handle, hotkeyId);
+        hotkeySuspended = true;
+        try
+        {
+            using var dialog = new SettingsWindow(shortcut, ApplyShortcut);
+            settingsWindow = dialog;
+            dialog.ShowDialog();
+        }
+        finally
+        {
+            settingsWindow = null; hotkeySuspended = false;
+            if (!stopping && !Native.RegisterHotKey(messages.Handle, hotkeyId, shortcut.Modifiers | 0x4000, (uint)shortcut.Key))
+            {
+                Report("Der Shortcut konnte nicht erneut aktiviert werden. Blackveil wird sicher beendet.",
+                    new Win32Exception(Marshal.GetLastWin32Error()));
+                ExitThread();
+            }
+        }
+    }
+
+    private void Activate()
+    {
+        if (active || stopping || settingsWindow is not null) return;
         try
         {
             // All partial resources belong to Deactivate, including failed form creation.
-            hooks = new InputHooks(messages.Handle);
+            hooks = new InputHooks(messages.Handle, shortcut);
             Cursor.Hide(); cursorHidden = true;
             active = true;
             RebuildWindows();
@@ -125,7 +177,7 @@ internal sealed class TrayContext : ApplicationContext
                 if (cursorHidden) { Cursor.Show(); cursorHidden = false; }
                 if (hadHooks)
                 {
-                    Native.ReleaseActivationKeys(initiallyHeld);
+                    Native.ReleaseActivationKeys(initiallyHeld, shortcut);
                     Native.ReleaseActivationButtons(initiallyHeldButtons);
                 }
             }
@@ -141,7 +193,8 @@ internal sealed class TrayContext : ApplicationContext
         SystemEvents.PowerModeChanged -= PowerChanged;
         SystemEvents.SessionSwitch -= SessionChanged;
         if (desktopHook != 0) { Native.UnhookWinEvent(desktopHook); desktopHook = 0; }
-        Native.UnregisterHotKey(messages.Handle, Native.HotkeyId);
+        Native.UnregisterHotKey(messages.Handle, hotkeyId);
+        settingsWindow?.Close();
         tray.Visible = false;
     }
 
@@ -170,7 +223,7 @@ internal sealed class TrayContext : ApplicationContext
         {
             try
             {
-                if (m.Msg == 0x312 && (int)m.WParam == Native.HotkeyId)
+                if (m.Msg == 0x312 && (int)m.WParam == context.hotkeyId)
                 { if (context.active) context.Deactivate(); else context.Activate(); return; }
                 if (m.Msg == Native.ToggleMessage) { if (context.active) context.Deactivate(); return; }
                 if (m.Msg is SafeStopMessage or Native.FailureMessage) { context.Deactivate(); return; }
