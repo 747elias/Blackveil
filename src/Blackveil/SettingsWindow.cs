@@ -47,7 +47,12 @@ internal sealed class SettingsWindow : Form
         buttons.Controls.Add(cancel); buttons.Controls.Add(apply); layout.Controls.Add(buttons);
         Controls.Add(layout);
         CancelButton = cancel;
-        KeyDown += (_, e) => { if (recording) { e.Handled = true; e.SuppressKeyPress = true; } };
+        KeyDown += (_, e) =>
+        {
+            if (!recording) return;
+            CaptureShortcut(e.KeyData);
+            e.Handled = true; e.SuppressKeyPress = true;
+        };
     }
     internal void BeginRecording()
     {

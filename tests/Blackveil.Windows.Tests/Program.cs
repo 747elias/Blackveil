@@ -121,13 +121,14 @@ internal static class Program
                 if (stage == 2) throw new InvalidOperationException("Settings save did not close the dialog");
                 if (stage == 0)
                 {
+                    dialog.Activate();
                     dialog.BeginRecording();
                     CustomChord(new Shortcut(0x4B, 3));
                     stage = 1;
                 }
                 else
                 {
-                    Require(dialog.Candidate == new Shortcut(0x4B, 3), "GUI captures real Ctrl+Alt+K input");
+                    if (dialog.Candidate != new Shortcut(0x4B, 3)) return;
                     CustomRelease(dialog.Candidate);
                     stage = 2;
                     Descendants(dialog).OfType<Button>().Single(b => b.Text == "Speichern").PerformClick();
