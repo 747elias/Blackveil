@@ -128,7 +128,7 @@ internal sealed class TrayContext : ApplicationContext
 
     private void Activate()
     {
-        if (active || stopping || settingsWindow is not null || updates?.Busy == true || changesWindow is { IsDisposed: false } || !hotkeyAvailable) return;
+        if (active || stopping || settingsWindow is not null || !hotkeyAvailable) return;
         try
         {
             // All partial resources belong to Deactivate, including failed form creation.

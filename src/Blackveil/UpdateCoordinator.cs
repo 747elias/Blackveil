@@ -66,12 +66,14 @@ internal sealed class UpdateCoordinator : IDisposable
     {
         if (Busy || disposed) return;
         if (!canInteract()) { if (!manual) Arm(TimeSpan.FromMinutes(2)); return; }
+        bool deferred = false;
         Busy = true; SetStatus("Suche nach Updates …");
         try
         {
             state = state with { LastCheckUtc = DateTimeOffset.UtcNow }; storage.Save("update-state.json", state);
             ReleaseInfo release = await client.LatestAsync(cancel.Token);
             if (disposed) return;
+            if (!canInteract()) { deferred = true; SetStatus("Update-Prüfung wird nach dem Schwarzbild fortgesetzt."); return; }
             if (release.Version <= CurrentVersion)
             {
                 state = state with { PendingVersion = null }; installDue = null;
@@ -101,14 +103,14 @@ internal sealed class UpdateCoordinator : IDisposable
                     eligible = MessageBox.Show($"Blackveil {release.Version} ist verfügbar. Jetzt im Hintergrund installieren und neu starten?\n\n{release.Notes[..Math.Min(6000, release.Notes.Length)]}", "Blackveil – Update", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes;
                 if (eligible)
                 {
-                    if (!canInteract()) { state = state with { PendingVersion = release.Version.ToString() }; return; }
+                    if (!canInteract()) { deferred = true; state = state with { PendingVersion = release.Version.ToString() }; return; }
                     bool installed = UpdateInstaller.IsInstalled(Environment.ProcessPath!);
                     string directory = Path.Combine(storage.Root, "updates", Guid.NewGuid().ToString("N"));
                     SetStatus("Update wird heruntergeladen und geprüft …");
                     string hash = await client.DownloadAsync(release, installed, directory, cancel.Token);
                     if (disposed) return;
                     string package = Path.Combine(directory, installed ? $"Blackveil-Setup-{release.Version}.exe" : "Blackveil.exe");
-                    if (!canInteract()) { state = state with { PendingVersion = release.Version.ToString() }; return; }
+                    if (!canInteract()) { deferred = true; state = state with { PendingVersion = release.Version.ToString() }; return; }
                     UpdateInstaller.LaunchHelper(directory, package, hash, installed, release.Version);
                     exitForUpdate();
                 }
@@ -122,7 +124,7 @@ internal sealed class UpdateCoordinator : IDisposable
             SetStatus("Update nicht möglich: " + error.Message);
             // Background failures stay in the status display and local log.
         }
-        finally { Busy = false; if (!disposed) { Schedule(); Changed?.Invoke(); } }
+        finally { Busy = false; if (!disposed) { if (deferred) Arm(TimeSpan.FromMinutes(2)); else Schedule(); Changed?.Invoke(); } }
     }
     private void SetStatus(string text) { Status = text; if (!disposed) Changed?.Invoke(); }
     private void Schedule()
