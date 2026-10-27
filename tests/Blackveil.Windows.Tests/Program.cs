@@ -8,8 +8,9 @@ using Shortcut = Blackveil.Core.Shortcut;
 internal static class Program
 {
     [STAThread]
-    private static int Main()
+    private static int Main(string[] args)
     {
+        if (args is ["--assert-installed", var exe]) { Require(UpdateInstaller.IsInstalled(exe), "Installed updater mode detected"); return 0; }
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
         using var receiver = new Receiver();
         InputHooks? hooks = null;
@@ -95,6 +96,7 @@ internal static class Program
                 restarted.Stop();
             }
             Directory.Delete(Path.GetDirectoryName(configPath)!, true);
+            UpdateTests.Run();
             Console.WriteLine("PASS: configurable shortcut recording, persistence, restart, warning-only shortcut saving; native hotkey, collision, MOD_NOREPEAT, real LL hook unlock, unhook, protected overlay close, three full tray-app cycles.");
             return 0;
         }

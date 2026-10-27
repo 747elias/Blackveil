@@ -4,7 +4,7 @@ Auf einer freien Windows-11-Testsitzung beginnen. Vor jedem Test wissen, dass Ct
 
 | Bereich | Durchführung | Erwartung |
 |---|---|---|
-| Tray / Instanz | EXE starten, nochmals starten, Info öffnen | Nur ein Tray-Symbol, kein Hauptfenster, Version 2.0.1 |
+| Tray / Instanz | EXE starten, nochmals starten, Info öffnen | Nur ein Tray-Symbol, kein Hauptfenster, Version 2.1.0 |
 | Globaler Hotkey | Notepad, Browser und Vollbild-App fokussieren; Ctrl+Shift+Q drücken | Schwarzbild aus jedem normalen Vordergrundprogramm |
 | Wiederholung | Q während des ersten Hotkeys zehn Sekunden halten, loslassen; erneut drücken und loslassen | Einmal an, erst durch zweite Betätigung aus; kein Flackern/Reaktivieren |
 | Hook / Hotkey | Linke/rechte Ctrl-/Shift-Kombinationen, Q zuerst und zuletzt loslassen; 20 Zyklen | Jeder gültige neue Hotkey entsperrt; keine hängenden Modifikatoren danach |
@@ -35,3 +35,9 @@ Auf einer freien Windows-11-Testsitzung beginnen. Vor jedem Test wissen, dass Ct
 Diese Tests belegen keine physische Touch-/Stiftverarbeitung, Bildschirmabdeckung, Mixed-DPI-Hotplug oder Standby. Diese Punkte bleiben auf echter Hardware zu prüfen. Auch ein erfolgreicher Windows-CI-Lauf ersetzt diese Tests nicht.
 
 Ab 2.0.1 zusätzlich Shift+K, F-Taste ohne Modifikatoren, F12, Win-Kombination, Escape, Tab, OEM-/Medientaste und Shift allein testen. Bei Systemkombinationen ohne Garantie auf Funktion: Auswahl und Speicherung müssen möglich bleiben. Im Konfliktfall App neu starten und die Einstellungen zur Korrektur verwenden.
+
+## Updates ab 2.1
+
+Automatische Suche und automatische Installation unabhängig umschalten, Zeiten speichern, App neu starten und Persistenz prüfen. Automatik aus: keine Netzwerksuche, manueller Button bleibt funktionsfähig. Suche beim Start mit Installationsautomatik aus: neues Release zeigt eine Ja/Nein-Frage; Nein lässt die bisherige App laufen. Automatik ein: stille Aktualisierung, Neustart und Änderungsfenster. Zeitpläne für Suche und Installation separat testen, insbesondere verschiedene Uhrzeiten, Standby, Sommerzeit und App zur Fälligkeit ausgeschaltet. Während des Schwarzbilds darf kein Installer starten; nach Verlassen wird der Termin nachgeholt. Netzwerkfehler, GitHub-Rate-Limit, unvollständigen Download und falschen SHA256 prüfen. Portable App in nicht beschreibbarem Ordner muss weiterlaufen und einen Fehlerstatus zeigen. Einstellungen und Autostart vor/nach Update vergleichen. Änderungsfenster schliessen, neu starten: es erscheint erst bei neuer Version wieder.
+
+`./scripts/Test-Update.ps1` nutzt ein freies CI-Benutzerprofil und die veröffentlichte 2.0.1 als Fixture: echte portable und installierte Aktualisierung zur aktuellen Version, Helferprozess, stilles Setup, Neustart, Änderungsfenster und Erhalt von Einstellungen/Autostart. Eine falsche Prüfsumme muss die EXE unverändert lassen und die bisherige App wieder starten. Der Updater wird in 2.1 eingeführt; der erste Wechsel von 2.0.1 wird dabei vom Test-Helfer eingeleitet, nicht von einem in 2.0.1 bereits vorhandenen Updater.

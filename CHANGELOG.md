@@ -1,5 +1,15 @@
 # Änderungsprotokoll
 
+## [2.1.0] - 2026-10-27
+
+- Update-Einstellungen mit getrennten Schaltern für automatische Suche und automatische Installation.
+- Suchen beim Start, alle sechs Stunden, täglich zur Uhrzeit oder alle sieben Tage; Installationen sofort, beim nächsten Start oder täglich zur Uhrzeit.
+- Manuelle Suche per Button, auf Wunsch ohne Rückfrage installieren oder vor der Installation fragen.
+- Downloads aus dem offiziellen GitHub-Release mit SHA256-Prüfung; stille Benutzerinstallation bzw. Austausch der portablen EXE und automatischer Neustart.
+- Fenster mit Änderungen nach einem Update, auch für übersprungene Versionen; Einstellungen und Autostart bleiben erhalten.
+- Geplante Updates werden während des Schwarzbilds verschoben. Fehler führen nicht zu einer automatischen Installationsschleife.
+- Automatisierte Tests für Zeitpläne, GUI-Einstellungen, Downloads, Prüfsummen sowie echte portable und installierte Updates.
+
 ## [2.0.1] - 2026-10-25
 
 - Freie Tastatur-Shortcut-Auswahl: auch Shift ohne Ctrl/Alt, einzelne Tasten, Win, F12 und Sondertasten.

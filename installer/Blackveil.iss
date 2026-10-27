@@ -55,6 +55,10 @@ Filename: "{app}\Blackveil.exe"; Description: "Blackveil im Infobereich starten"
 
 [UninstallDelete]
 Type: files; Name: "{localappdata}\Blackveil\settings.json"
+Type: files; Name: "{localappdata}\Blackveil\update-settings.json"
+Type: files; Name: "{localappdata}\Blackveil\update-state.json"
+Type: files; Name: "{localappdata}\Blackveil\update-result.json"
+Type: filesandordirs; Name: "{localappdata}\Blackveil\updates"
 Type: filesandordirs; Name: "{localappdata}\Blackveil\logs"
 
 [Code]

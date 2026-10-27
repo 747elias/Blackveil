@@ -5,8 +5,9 @@ internal static class Program
     internal static TrayContext? Context;
     private static int uiThread;
     [STAThread]
-    private static void Main()
+    private static void Main(string[] args)
     {
+        if (args is ["--apply-update", var plan]) { Environment.ExitCode = UpdateInstaller.Run(plan); return; }
         using var mutex = new Mutex(true, @"Local\Blackveil.Singleton", out bool first);
         if (!first) return;
         uiThread = Environment.CurrentManagedThreadId;
@@ -17,7 +18,14 @@ internal static class Program
         Application.ThreadException += (_, e) => Fatal(e.Exception);
         AppDomain.CurrentDomain.UnhandledException += (_, e) => Fatal(e.ExceptionObject as Exception);
         Application.ApplicationExit += (_, _) => Context?.Stop();
-        try { using var context = new TrayContext(); Context = context; Application.Run(context); }
+        try
+        {
+            using var context = new TrayContext(); Context = context;
+            EventHandler? startup = null;
+            startup = (_, _) => { Application.Idle -= startup; context.StartUpdates(); };
+            Application.Idle += startup;
+            try { Application.Run(context); } finally { Application.Idle -= startup; }
+        }
         catch (Exception error) { Fatal(error); }
         finally { Context?.Stop(); Context = null; mutex.ReleaseMutex(); }
     }

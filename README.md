@@ -6,7 +6,7 @@ Vorübergehender Sicht- und Eingabeschutz für **Windows 11 x64**, geschrieben i
 
 ## Installation und Bedienung
 
-1. `Blackveil-Setup-2.0.1.exe` aus dem Release starten. Die Installation erfolgt pro Benutzer unter `%LOCALAPPDATA%\Programs\Blackveil`, ohne UAC-Erhöhung. Optional «Blackveil mit Windows starten» auswählen.
+1. `Blackveil-Setup-2.1.0.exe` aus dem Release starten. Die Installation erfolgt pro Benutzer unter `%LOCALAPPDATA%\Programs\Blackveil`, ohne UAC-Erhöhung. Optional «Blackveil mit Windows starten» auswählen.
 2. Alternativ `Blackveil.exe` in einem dauerhaften Ordner ablegen oder die portable ZIP entpacken und die EXE starten. Für portablen Autostart darf dieser Pfad anschliessend nicht verändert werden.
 3. **Ctrl + Shift + Q** aktiviert schwarze, randlose Fenster auf allen Monitoren. Den Hotkey erneut drücken und **die Haupttaste loslassen**, um den Modus zu beenden. Gehaltenes Q schaltet nicht mehrfach um.
 4. **Linksklick auf das Tray-Symbol** öffnet «Einstellungen». Mit «Shortcut aufnehmen» die gewünschte Kombination drücken und danach «Speichern» wählen. Auch Shift-Kombinationen, einzelne Tasten, Windows-Tasten, F12 und Sondertasten sind auswählbar. Alternativ die Taste in der Liste wählen und Ctrl/Alt/Shift/Win ankreuzen. Einzelne Modifikatortasten werden beim Loslassen aufgenommen; der Aufnahme-Button bricht die Aufnahme ab. «Standard» stellt Ctrl + Shift + Q wieder her. Während der Einstellungen ist das Schwarzbild pausiert.
@@ -22,6 +22,25 @@ Get-Content .\SHA256SUMS.txt
 ```
 
 Der gewählte Shortcut wird unter `%LOCALAPPDATA%\Blackveil\settings.json` gespeichert und beim nächsten Start geladen. Er gilt sowohl zum Aktivieren als auch zum Beenden. Auch reservierte oder belegte Kombinationen dürfen gespeichert werden. Ein Hinweis warnt, dass Windows sie möglicherweise abfängt. Ohne erfolgreiche Registrierung wird kein Schwarzbild aktiviert. Ein erfolgreiches RegisterHotKey ist ebenfalls keine Garantie für geschützte Systemkombinationen. Schliessen ohne Speichern verwirft die noch nicht gespeicherte Auswahl. Während der Aufnahme werden keine Tastensequenzen protokolliert. Ohne gültige Einstellungsdatei gilt wieder der Standard-Shortcut.
+
+## Updates ab Version 2.1
+
+Unter **Einstellungen → Updates** lassen sich automatische Suche und automatische Installation getrennt ein-/ausschalten. Änderungen werden mit «Update-Einstellungen speichern» übernommen; diese Einstellungen sind unabhängig vom Shortcut-Speichern.
+
+- **Suche:** beim Start, alle sechs Stunden, täglich zu einer lokalen Uhrzeit oder alle sieben Tage.
+- **Installation:** sobald gefunden, beim nächsten Start oder täglich zu einer eigenen lokalen Uhrzeit.
+- **Ohne automatische Installation:** Blackveil fragt vor der Installation. «Nein» verschiebt das Update. Für ausschliesslich manuelle Nutzung automatische Suche ausschalten.
+- **Jetzt nach Updates suchen:** funktioniert auch bei ausgeschalteter Automatik. Bei eingeschalteter automatischer Installation installiert dieser manuelle Auftrag sofort ohne Rückfrage; sonst erscheint die Installationsfrage.
+
+Standard: Suche beim Start eingeschaltet, automatische Installation ausgeschaltet. Zeitpläne laufen nur, solange Blackveil läuft; die Windows-Autostart-Option ist dafür unabhängig einschaltbar. Verpasste tägliche Termine bei ausgeschalteter App werden am nächsten laufenden Termin ausgeführt. Während des Schwarzbilds wird eine fällige Suche/Installation verschoben. Während einer Update-Suche oder Installation lässt sich kein neues Schwarzbild aktivieren.
+
+Die App bezieht ausschliesslich stabile Releases aus `747elias/Blackveil`, ohne Token oder Kontoanmeldung. Sie prüft die Downloadadresse und die SHA256-Prüfsumme aus dem Release, bevor sie heruntergeladene Dateien ausführt. Die Prüfsumme schützt vor Übertragungsfehlern; sie ersetzt keine unabhängige Code-Signatur und schützt nicht vor einem kompromittierten GitHub-Repository.
+
+Installierte Ausgaben verwenden den Benutzer-Installer mit `/VERYSILENT`, portable Ausgaben ersetzen ihre EXE im bisherigen Ordner. Ein separater Helfer wartet auf das Beenden der App, prüft die Datei erneut, aktualisiert und startet Blackveil ohne Schwarzbild neu. Der Zielordner muss für den Benutzer beschreibbar sein. Der bisherige EXE-Stand wird vor dem Austausch gesichert und bei behandelbaren Fehlern wiederhergestellt; eine vollständig transaktionale Rücknahme sämtlicher Windows-Installer-Metadaten wird nicht garantiert. Nach einem Installationsfehler wird dieselbe Version nicht automatisch erneut installiert; ein manueller Versuch bleibt möglich.
+
+Nach einem Update erscheint **«Neu in Blackveil …»** mit den Änderungen seit der zuletzt angezeigten Version. Beim ersten Start von 2.1 wird dieses Fenster ebenfalls angezeigt. Updates werden unter `%LOCALAPPDATA%\Blackveil\updates` zwischengespeichert; alte Cache-Ordner werden nach sieben Tagen beim nächsten Start entfernt. Update-Einstellungen, Zeitplanstatus und zuletzt angezeigte Version liegen daneben in separaten JSON-Dateien. Die Deinstallation entfernt diese Dateien.
+
+**Versionen bis 2.0.1 haben noch keinen Updater. Daher 2.1 einmal manuell installieren; spätere Releases können dann automatisch installiert werden.** Den Monitor-Standby oder die Monitorhelligkeit verändert Blackveil weiterhin nicht.
 
 ## Deinstallation und Autostart
 
@@ -77,7 +96,7 @@ Gegenüber **erhöht gestarteten Anwendungen gelten UIPI/Integritätsgrenzen**. 
 
 Beim normalen Deaktivieren, bei teilweiser Aktivierung und behandelten Fehlern werden Hooks entfernt, Fenster geschlossen und der ausgeglichene Cursor-Hide-Aufruf rückgängig gemacht. Bei einer unerwarteten Hook-Thread-Störung wird der Modus beendet; bei dauerhaft blockierter Oberfläche beendet ein nur im aktiven Modus laufender Wächter den Prozess nach ungefähr zehn Sekunden. Bei hartem Prozessabbruch können keine .NET-Handler garantiert laufen: Windows entfernt die prozesseigenen Hooks, Fenster und Cursor-Zustände. Ein System- oder Treiberstillstand kann von einer Benutzer-App nicht behoben werden.
 
-Im inaktiven Modus existieren keine Polling-Timer. Fehlerlogs liegen unter `%LOCALAPPDATA%\Blackveil\logs`; Dateien älter als 14 Tage werden beim nächsten Logeintrag entfernt. Es werden keine Tasteneingaben, Screenshots oder privaten Inhalte protokolliert.
+Im inaktiven Modus existieren keine Eingabe-Polling-Timer. Ein eingeschalteter Update-Zeitplan verwendet einen Timer für den nächsten konkreten Termin; bei ausgeschalteter Automatik bleibt dieser gestoppt. Fehlerlogs liegen unter `%LOCALAPPDATA%\Blackveil\logs`; Dateien älter als 14 Tage werden beim nächsten Logeintrag entfernt. Es werden keine Tasteneingaben, Screenshots oder privaten Inhalte protokolliert.
 
 ## Aufbau und UI-Wahl
 

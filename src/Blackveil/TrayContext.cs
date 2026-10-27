@@ -29,6 +29,15 @@ internal sealed class TrayContext : ApplicationContext
     private int hotkeyId = Native.HotkeyId;
     private SettingsWindow? settingsWindow;
     private bool hotkeySuspended;
+    private UpdateCoordinator? updates;
+    private Form? changesWindow;
+    internal void StartUpdates()
+    {
+        if (updates is not null) return;
+        updates = new UpdateCoordinator(() => !active && !stopping, () => ExitThread());
+        changesWindow = updates.ShowChanges();
+        _ = updates.StartAsync();
+    }
     private bool hotkeyAvailable;
     private ToolStripItem? activationItem;
     internal bool CanActivate => hotkeyAvailable;
@@ -102,7 +111,7 @@ internal sealed class TrayContext : ApplicationContext
         hotkeySuspended = true;
         try
         {
-            using var dialog = new SettingsWindow(shortcut, ApplyShortcut, () => ShortcutWarning);
+            using var dialog = new SettingsWindow(shortcut, ApplyShortcut, () => ShortcutWarning, updates);
             settingsWindow = dialog;
             dialog.ShowDialog();
         }
@@ -119,7 +128,7 @@ internal sealed class TrayContext : ApplicationContext
 
     private void Activate()
     {
-        if (active || stopping || settingsWindow is not null || !hotkeyAvailable) return;
+        if (active || stopping || settingsWindow is not null || updates?.Busy == true || changesWindow is { IsDisposed: false } || !hotkeyAvailable) return;
         try
         {
             // All partial resources belong to Deactivate, including failed form creation.
@@ -191,6 +200,8 @@ internal sealed class TrayContext : ApplicationContext
     {
         if (stopping) return;
         stopping = true;
+        updates?.Dispose();
+        changesWindow?.Close();
         Deactivate();
         SystemEvents.DisplaySettingsChanged -= DisplayChanged;
         SystemEvents.PowerModeChanged -= PowerChanged;

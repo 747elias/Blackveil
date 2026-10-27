@@ -17,7 +17,7 @@ internal sealed class SettingsWindow : Form
     private readonly CheckBox ctrl = new() { Text = "Ctrl", AutoSize = true }, alt = new() { Text = "Alt", AutoSize = true },
         shift = new() { Text = "Shift", AutoSize = true }, win = new() { Text = "Win", AutoSize = true };
     internal Shortcut Candidate => candidate;
-    internal SettingsWindow(Shortcut current, Action<Shortcut> save, Func<string?>? warning = null)
+    internal SettingsWindow(Shortcut current, Action<Shortcut> save, Func<string?>? warning = null, UpdateCoordinator? updates = null)
     {
         this.save = save;
         this.warning = warning;
@@ -64,7 +64,16 @@ internal sealed class SettingsWindow : Form
             catch (Exception error) { status.Text = error.Message; }
         };
         buttons.Controls.Add(cancel); buttons.Controls.Add(apply); layout.Controls.Add(buttons);
-        Controls.Add(layout);
+        if (updates is null) Controls.Add(layout);
+        else
+        {
+            ClientSize = new Size(590, 560);
+            var tabs = new TabControl { Dock = DockStyle.Fill };
+            var shortcutPage = new TabPage("Shortcut"); shortcutPage.Controls.Add(layout);
+            var updatePage = new TabPage("Updates"); updatePage.Controls.Add(new UpdateSettingsPanel(updates));
+            tabs.TabPages.Add(shortcutPage); tabs.TabPages.Add(updatePage); Controls.Add(tabs);
+            tabs.SelectedIndexChanged += (_, _) => { recording = false; RefreshCandidate(); };
+        }
         CancelButton = cancel;
         KeyUp += (_, e) =>
         {
