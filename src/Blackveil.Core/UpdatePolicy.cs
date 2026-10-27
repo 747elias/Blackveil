@@ -15,6 +15,7 @@ public sealed record UpdatePreferences
 }
 public static class UpdatePolicy
 {
+    public static TimeSpan DelayUntil(DateTimeOffset due, DateTimeOffset now) => due > now ? due - now : TimeSpan.FromSeconds(1);
     public static DateTimeOffset AtNextLocalTime(DateTimeOffset now, int minute)
     {
         DateTime day = now.LocalDateTime.Date.AddMinutes(minute);

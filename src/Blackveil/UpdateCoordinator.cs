@@ -124,7 +124,17 @@ internal sealed class UpdateCoordinator : IDisposable
             SetStatus("Update nicht möglich: " + error.Message);
             // Background failures stay in the status display and local log.
         }
-        finally { Busy = false; if (!disposed) { if (deferred) Arm(TimeSpan.FromMinutes(2)); else Schedule(); Changed?.Invoke(); } }
+        finally
+        {
+            Busy = false;
+            if (!disposed)
+            {
+                try { storage.Save("update-state.json", state); }
+                catch (Exception error) { Log.Write("Could not persist update state", error); }
+                if (deferred) Arm(TimeSpan.FromMinutes(2)); else Schedule();
+                Changed?.Invoke();
+            }
+        }
     }
     private void SetStatus(string text) { Status = text; if (!disposed) Changed?.Invoke(); }
     private void Schedule()
@@ -137,7 +147,7 @@ internal sealed class UpdateCoordinator : IDisposable
             installDue = UpdatePolicy.AtNextLocalTime(now, Preferences.InstallMinute);
             if (next is null || installDue < next) next = installDue;
         }
-        if (next is { } due) Arm(due - now < TimeSpan.FromMinutes(1) ? TimeSpan.FromMinutes(30) : due - now);
+        if (next is { } due) Arm(UpdatePolicy.DelayUntil(due, now));
     }
     private void Arm(TimeSpan delay)
     { if (disposed) return; timer.Stop(); timer.Interval = (int)Math.Clamp(delay.TotalMilliseconds, 1000, int.MaxValue); timer.Start(); }

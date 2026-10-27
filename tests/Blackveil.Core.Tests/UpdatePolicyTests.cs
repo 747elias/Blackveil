@@ -14,6 +14,13 @@ public sealed class UpdatePolicyTests
         Assert.Null(UpdatePolicy.NextCheck(new(), null, now));
     }
     [Fact]
+    public void NearTermSchedulesKeepTheirExactDelay()
+    {
+        var now = DateTimeOffset.UtcNow;
+        Assert.Equal(TimeSpan.FromSeconds(30), UpdatePolicy.DelayUntil(now.AddSeconds(30), now));
+        Assert.Equal(TimeSpan.FromSeconds(1), UpdatePolicy.DelayUntil(now.AddSeconds(-1), now));
+    }
+    [Fact]
     public void IntervalIsMeasuredFromLastCheck()
     {
         var now = DateTimeOffset.UtcNow;
