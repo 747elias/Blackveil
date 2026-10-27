@@ -54,7 +54,7 @@ internal sealed class TrayContext : ApplicationContext
         shortcut = this.settings.Load();
         messages = new MessageWindow(this);
         hotkeyAvailable = Native.RegisterHotKey(messages.Handle, hotkeyId, 0x4000 | shortcut.EffectiveModifiers, (uint)shortcut.Key);
-        icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath!) ?? (Icon)SystemIcons.Application.Clone();
+        icon = AppTheme.CreateIcon();
         menu = new ContextMenuStrip { ShowImageMargin = false, Font = new Font("Segoe UI",10), ForeColor = AppTheme.Ink, Renderer = new ToolStripProfessionalRenderer(new MenuColors()) };
         activationItem = menu.Items.Add("Schwarzbild aktivieren", null, (_, _) => Activate());
         var startup = new ToolStripMenuItem("Mit Windows starten") { CheckOnClick = false };

@@ -11,6 +11,7 @@
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
-  <ItemGroup><EmbeddedResource Include="../../CHANGELOG.md" LogicalName="Blackveil.Changelog" /></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="blackveil.ico" LogicalName="Blackveil.Icon" />
+  <EmbeddedResource Include="../../CHANGELOG.md" LogicalName="Blackveil.Changelog" /></ItemGroup>
   <ItemGroup><ProjectReference Include="../Blackveil.Core/Blackveil.Core.csproj" /></ItemGroup>
 </Project>

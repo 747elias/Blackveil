@@ -119,7 +119,11 @@ internal sealed class SettingsWindow : Form
     }
     private sealed record KeyChoice(int Code)
     {
-        public override string ToString() => $"{Shortcut.KeyName(Code)} ({(Keys)Code})";
+        public override string ToString()
+        {
+            string label = Shortcut.KeyName(Code), native = ((Keys)Code).ToString();
+            return label == native ? label : label.StartsWith("VK ") ? $"{native} ({label})" : label;
+        }
     }
     private void RefreshPicker()
     {

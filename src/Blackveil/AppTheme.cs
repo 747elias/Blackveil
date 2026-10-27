@@ -4,8 +4,14 @@ internal static class AppTheme
 {
     internal static readonly Color Canvas = Color.FromArgb(244,247,249), Ink = Color.FromArgb(24,39,51), Muted = Color.FromArgb(94,112,126),
         Navy = Color.FromArgb(15,29,42), Accent = Color.FromArgb(0,119,104), Border = Color.FromArgb(221,230,234), Tint = Color.FromArgb(229,246,241);
+    internal static Icon CreateIcon()
+    {
+        using var stream = typeof(AppTheme).Assembly.GetManifestResourceStream("Blackveil.Icon")!;
+        using var source = new Icon(stream); return (Icon)source.Clone();
+    }
     internal static void Form(Form form)
-    { form.BackColor = Canvas; form.ForeColor = Ink; form.Font = new Font("Segoe UI", 10); form.Padding = new Padding(0); }
+    { var icon = CreateIcon(); form.Icon = icon; form.Disposed += (_,_) => icon.Dispose();
+      form.BackColor = Canvas; form.ForeColor = Ink; form.Font = new Font("Segoe UI", 10); form.Padding = new Padding(0); }
     internal static void Button(Button button, bool primary = false)
     {
         button.FlatStyle = FlatStyle.Flat; button.FlatAppearance.BorderSize = primary ? 0 : 1; button.FlatAppearance.BorderColor = Border;
