@@ -14,6 +14,7 @@ internal sealed class UpdateSettingsPanel : UserControl
     internal UpdateSettingsPanel(UpdateCoordinator coordinator)
     {
         this.coordinator = coordinator; Dock = DockStyle.Fill;
+        if (UpdateInstaller.IsMachineInstalled(Environment.ProcessPath!)) install.Text = "Updates automatisch installieren (Windows-Bestätigung nötig)";
         var p = coordinator.Preferences;
         search.Checked = p.AutoCheck; install.Checked = p.AutoInstall;
         checkWhen.Items.AddRange(["Beim Start", "Alle 6 Stunden", "Täglich zur Uhrzeit", "Alle 7 Tage"]);

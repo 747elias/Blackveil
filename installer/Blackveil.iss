@@ -1,4 +1,4 @@
-#ifndef AppVersion
+﻿#ifndef AppVersion
   #error AppVersion muss aus Directory.Build.props übergeben werden.
 #endif
 #ifndef SourceDir
@@ -39,7 +39,6 @@ WizardSmallImageFile=assets\wizard-small.bmp
 WizardImageStretch=yes
 WizardImageBackColor=$21160C
 WizardSmallImageBackColor=$21160C
-WizardResizable=yes
 CloseApplications=yes
 RestartApplications=no
 AppMutex=Blackveil.Singleton
@@ -83,10 +82,10 @@ var
   ScopeText: String;
 begin
   if IsAdminInstallMode then
-    ScopeText := 'Fuer alle Benutzer  |  Administratorrechte erforderlich'
+    ScopeText := 'Für alle Benutzer'
   else
-    ScopeText := 'Nur fuer dich  |  Keine Administratorrechte erforderlich';
-  WizardForm.Caption := 'Blackveil {#AppVersion} - ' + ScopeText;
+    ScopeText := 'Nur für dich';
+  WizardForm.Caption := 'Blackveil {#AppVersion} · ' + ScopeText;
 end;
 
 procedure InitializeWizard;
@@ -102,8 +101,8 @@ begin
   WizardForm.PageNameLabel.Font.Color := $687700;
   WizardForm.PageDescriptionLabel.Font.Color := $7E705E;
   WizardForm.WelcomeLabel1.Caption := 'Dein Bildschirm.' + #13#10 + 'Dein Moment.';
-  WizardForm.WelcomeLabel2.Caption := 'Blackveil blendet deine Bildschirme auf Tastendruck aus und haelt gewoehnliche Eingaben zurueck.' + #13#10 + #13#10 +
-    'Waehle die Installation fuer dein Konto oder fuer alle Benutzer. Deine Einstellungen bleiben immer persoenlich.';
+  WizardForm.WelcomeLabel2.Caption := 'Blackveil blendet deine Bildschirme auf Tastendruck aus und hält gewöhnliche Eingaben zurück.' + #13#10 + #13#10 +
+    'Wähle die Installation für dein Konto oder für alle Benutzer. Deine Einstellungen bleiben immer persönlich.';
   ScopeHint := TNewStaticText.Create(WizardForm);
   ScopeHint.Parent := WizardForm.SelectTasksPage;
   ScopeHint.AutoSize := False;
@@ -111,7 +110,7 @@ begin
   ScopeHint.SetBounds(ScaleX(0), ScaleY(125), WizardForm.SelectTasksPage.ClientWidth, ScaleY(85));
   ScopeHint.Font.Color := $7E705E;
   if IsAdminInstallMode then
-    ScopeHint.Caption := 'Systemweite Installation: Den persoenlichen Autostart kannst du nach der Installation im Blackveil-Tray-Menue aktivieren. Updates brauchen eine Windows-Bestaetigung.'
+    ScopeHint.Caption := 'Systemweite Installation: Den persönlichen Autostart kannst du nach der Installation im Blackveil-Tray-Menü aktivieren. Updates brauchen eine Windows-Bestätigung.'
   else
     ScopeHint.Caption := 'Alles bleibt in deinem Konto. Blackveil startet auf Wunsch nur im Hintergrund - ohne Schwarzbild.';
   if IsAdminInstallMode then Exit;
