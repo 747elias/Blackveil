@@ -5,7 +5,7 @@ using Microsoft.Win32;
 namespace Blackveil;
 
 internal sealed record UpdatePlan(int ParentId, long ParentStartTicks, string Target, string Package, string Hash, bool Installed, string Version, bool Autostart);
-internal sealed record UpdateResult(bool Success, string Message)
+internal sealed record UpdateResult(bool Success, string Message, string? Version = null)
 { public UpdateResult() : this(false, "") { } }
 internal static class UpdateInstaller
 {
@@ -19,6 +19,7 @@ internal static class UpdateInstaller
     {
         string target = Environment.ProcessPath!;
         if (!Path.GetFileName(target).Equals("Blackveil.exe", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Updates benötigen die veröffentlichte Blackveil.exe.");
+        if ((File.GetAttributes(target) & FileAttributes.ReadOnly) != 0) throw new IOException("Die Blackveil.exe ist schreibgeschützt.");
         // Verify write access before shutting down the working instance.
         string probe = Path.Combine(Path.GetDirectoryName(target)!, Guid.NewGuid() + ".tmp");
         File.WriteAllText(probe, ""); File.Delete(probe);
@@ -42,11 +43,11 @@ internal static class UpdateInstaller
         {
             string root = Path.GetFullPath(Path.Combine(storage.Root, "updates")) + Path.DirectorySeparatorChar;
             string fullPlan = Path.GetFullPath(planFile);
-            if (!fullPlan.StartsWith(root, StringComparison.OrdinalIgnoreCase) || Path.GetDirectoryName(fullPlan) != Path.GetDirectoryName(Environment.ProcessPath))
+            if (!fullPlan.StartsWith(root, StringComparison.OrdinalIgnoreCase) || !string.Equals(Path.GetDirectoryName(fullPlan), Path.GetDirectoryName(Environment.ProcessPath), StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDataException("Ungültiger Update-Auftrag.");
             plan = JsonSerializer.Deserialize<UpdatePlan>(File.ReadAllText(fullPlan)) ?? throw new InvalidDataException("Update-Auftrag fehlt.");
             if (!Path.IsPathFullyQualified(plan.Target) || !Path.GetFileName(plan.Target).Equals("Blackveil.exe", StringComparison.OrdinalIgnoreCase) ||
-                Path.GetDirectoryName(Path.GetFullPath(plan.Package)) != Path.GetDirectoryName(fullPlan) || !Version.TryParse(plan.Version, out _))
+                !string.Equals(Path.GetDirectoryName(Path.GetFullPath(plan.Package)), Path.GetDirectoryName(fullPlan), StringComparison.OrdinalIgnoreCase) || !Version.TryParse(plan.Version, out _))
                 throw new InvalidDataException("Ungültige Update-Pfade.");
             plan = plan with { Target = Path.GetFullPath(plan.Target), Package = Path.GetFullPath(plan.Package) };
             try
@@ -80,7 +81,7 @@ internal static class UpdateInstaller
             }
             var actual = FileVersionInfo.GetVersionInfo(plan.Target).FileVersion;
             if (actual != plan.Version + ".0") throw new InvalidDataException("Installierte Version stimmt nicht mit dem Update überein.");
-            storage.Save("update-result.json", new UpdateResult(true, "Update auf " + plan.Version + " erfolgreich installiert."));
+            storage.Save("update-result.json", new UpdateResult(true, "Update auf " + plan.Version + " erfolgreich installiert.", plan.Version));
             Restart(plan.Target);
             try { File.Delete(backup); } catch (IOException) { }
             return 0;
@@ -93,7 +94,7 @@ internal static class UpdateInstaller
                 try
                 {
                     if (backup is not null && File.Exists(backup)) File.Copy(backup, plan.Target, true);
-                    storage.Save("update-result.json", new UpdateResult(false, "Update fehlgeschlagen; die vorherige EXE wurde beibehalten bzw. wiederhergestellt. " + error.Message));
+                    storage.Save("update-result.json", new UpdateResult(false, "Update fehlgeschlagen; die vorherige EXE wurde beibehalten bzw. wiederhergestellt. " + error.Message, plan.Version));
                     Restart(plan.Target);
                 }
                 catch (Exception recovery) { Log.Write("Update recovery failed", recovery); MessageBox.Show("Blackveil konnte nicht neu gestartet werden. Bitte die App manuell starten. " + error.Message, "Blackveil – Update"); }

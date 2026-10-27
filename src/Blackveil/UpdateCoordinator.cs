@@ -147,7 +147,7 @@ internal sealed class UpdateCoordinator : IDisposable
         if (File.Exists(resultPath))
         {
             result = storage.Load<UpdateResult>("update-result.json"); File.Delete(resultPath);
-            state = state with { PendingVersion = null, FailedVersion = result.Success ? null : state.PendingVersion };
+            state = state with { PendingVersion = null, FailedVersion = result.Success ? null : result.Version ?? state.PendingVersion };
             // A failed helper restart must never immediately repeat the same installer.
             if (!result.Success && state.FailedVersion is null) state = state with { FailedVersion = "all" };
             storage.Save("update-state.json", state);
