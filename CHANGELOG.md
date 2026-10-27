@@ -1,5 +1,14 @@
 # Änderungsprotokoll
 
+## [2.1.1] - 2026-10-27
+
+- Setup mit Wahl zwischen «Nur für mich» und «Für alle Benutzer», passenden Installationspfaden und Windows-Rechteabfrage.
+- Neues Erscheinungsbild: dunkle Navigation, helle Inhaltskarten, türkise Akzente und deutlichere Typografie in Einstellungen, Updates und Änderungsfenster.
+- Gebrandetes Setup mit eigener Grafik, Willkommensseite und sichtbarem Installationsumfang.
+- Updates erkennen Benutzer- und Systeminstallationen; systemweite Updates bleiben systemweit und verwenden die normale UAC-Bestätigung für den Installer. Die Tray-App bleibt asInvoker.
+- Persönliche Einstellungen und Autostart bleiben pro Benutzer; bei Systeminstallationen wird Autostart über das Tray-Menü eingerichtet.
+- Erweiterte Windows-Tests für Systeminstallation, HKLM-Registrierung, Update und Deinstallation; UI-Screenshots als Workflow-Artefakte.
+
 ## [2.1.0] - 2026-10-27
 
 - Update-Einstellungen mit getrennten Schaltern für automatische Suche und automatische Installation.
