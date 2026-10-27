@@ -15,10 +15,14 @@ AppVersion={#AppVersion}
 AppVerName=Blackveil {#AppVersion}
 AppPublisher=Elias Hahn
 AppPublisherURL=https://github.com/747elias/Blackveil
-DefaultDirName={localappdata}\Programs\Blackveil
+DefaultDirName={autopf}\Blackveil
 DefaultGroupName=Blackveil
 DisableProgramGroupPage=yes
+DisableWelcomePage=no
+DisableFinishedPage=no
 PrivilegesRequired=lowest
+PrivilegesRequiredOverridesAllowed=dialog
+UsePreviousPrivileges=yes
 MinVersion=10.0.22000
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
@@ -29,6 +33,13 @@ UninstallDisplayIcon={app}\Blackveil.exe
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+WizardSizePercent=110
+WizardImageFile=assets\wizard.bmp
+WizardSmallImageFile=assets\wizard-small.bmp
+WizardImageStretch=yes
+WizardImageBackColor=$21160C
+WizardSmallImageBackColor=$21160C
+WizardResizable=yes
 CloseApplications=yes
 RestartApplications=no
 AppMutex=Blackveil.Singleton
@@ -38,7 +49,7 @@ LicenseFile=..\LICENSE
 Name: "german"; MessagesFile: "compiler:Languages\German.isl"
 
 [Tasks]
-Name: "autostart"; Description: "Blackveil mit Windows starten"; Flags: unchecked
+Name: "autostart"; Description: "Blackveil mit Windows starten"; Flags: unchecked; Check: IsPerUserInstall
 
 [Files]
 Source: "{#SourceDir}\Blackveil.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -47,29 +58,79 @@ Source: "{#SourceDir}\Blackveil.exe"; DestDir: "{app}"; Flags: ignoreversion
 Name: "{group}\Blackveil"; Filename: "{app}\Blackveil.exe"
 
 [Registry]
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "Blackveil"; ValueData: """{app}\Blackveil.exe"" --autostart"; Tasks: autostart; Flags: uninsdeletevalue
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "Blackveil"; Tasks: not autostart; Flags: deletevalue uninsdeletevalue
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "Blackveil"; ValueData: """{app}\Blackveil.exe"" --autostart"; Tasks: autostart; Flags: uninsdeletevalue; Check: IsPerUserInstall
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "Blackveil"; Tasks: not autostart; Flags: deletevalue uninsdeletevalue; Check: IsPerUserInstall
 
 [Run]
-Filename: "{app}\Blackveil.exe"; Description: "Blackveil im Infobereich starten"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\Blackveil.exe"; Description: "Blackveil im Infobereich starten"; Flags: nowait postinstall skipifsilent runasoriginaluser
 
 [UninstallDelete]
-Type: files; Name: "{localappdata}\Blackveil\settings.json"
-Type: files; Name: "{localappdata}\Blackveil\update-settings.json"
-Type: files; Name: "{localappdata}\Blackveil\update-state.json"
-Type: files; Name: "{localappdata}\Blackveil\update-result.json"
-Type: filesandordirs; Name: "{localappdata}\Blackveil\updates"
-Type: filesandordirs; Name: "{localappdata}\Blackveil\logs"
+Type: files; Name: "{localappdata}\Blackveil\settings.json"; Check: IsPerUserInstall
+Type: files; Name: "{localappdata}\Blackveil\update-settings.json"; Check: IsPerUserInstall
+Type: files; Name: "{localappdata}\Blackveil\update-state.json"; Check: IsPerUserInstall
+Type: files; Name: "{localappdata}\Blackveil\update-result.json"; Check: IsPerUserInstall
+Type: filesandordirs; Name: "{localappdata}\Blackveil\updates"; Check: IsPerUserInstall
+Type: filesandordirs; Name: "{localappdata}\Blackveil\logs"; Check: IsPerUserInstall
 
 [Code]
+function IsPerUserInstall: Boolean;
+begin
+  Result := not IsAdminInstallMode;
+end;
+
+procedure CurPageChanged(CurPageID: Integer);
+var
+  ScopeText: String;
+begin
+  if IsAdminInstallMode then
+    ScopeText := 'Fuer alle Benutzer  |  Administratorrechte erforderlich'
+  else
+    ScopeText := 'Nur fuer dich  |  Keine Administratorrechte erforderlich';
+  WizardForm.Caption := 'Blackveil {#AppVersion} - ' + ScopeText;
+end;
+
 procedure InitializeWizard;
 var
   ExistingRun: String;
+  ScopeHint: TNewStaticText;
 begin
+  WizardForm.Font.Name := 'Segoe UI';
+  WizardForm.Font.Size := 10;
+  WizardForm.WelcomeLabel1.Font.Size := 22;
+  WizardForm.WelcomeLabel1.Font.Color := $332718;
+  WizardForm.FinishedHeadingLabel.Font.Size := 22;
+  WizardForm.PageNameLabel.Font.Color := $687700;
+  WizardForm.PageDescriptionLabel.Font.Color := $7E705E;
+  WizardForm.WelcomeLabel1.Caption := 'Dein Bildschirm.' + #13#10 + 'Dein Moment.';
+  WizardForm.WelcomeLabel2.Caption := 'Blackveil blendet deine Bildschirme auf Tastendruck aus und haelt gewoehnliche Eingaben zurueck.' + #13#10 + #13#10 +
+    'Waehle die Installation fuer dein Konto oder fuer alle Benutzer. Deine Einstellungen bleiben immer persoenlich.';
+  ScopeHint := TNewStaticText.Create(WizardForm);
+  ScopeHint.Parent := WizardForm.SelectTasksPage;
+  ScopeHint.AutoSize := False;
+  ScopeHint.WordWrap := True;
+  ScopeHint.SetBounds(ScaleX(0), ScaleY(125), WizardForm.SelectTasksPage.ClientWidth, ScaleY(85));
+  ScopeHint.Font.Color := $7E705E;
+  if IsAdminInstallMode then
+    ScopeHint.Caption := 'Systemweite Installation: Den persoenlichen Autostart kannst du nach der Installation im Blackveil-Tray-Menue aktivieren. Updates brauchen eine Windows-Bestaetigung.'
+  else
+    ScopeHint.Caption := 'Alles bleibt in deinem Konto. Blackveil startet auf Wunsch nur im Hintergrund - ohne Schwarzbild.';
+  if IsAdminInstallMode then Exit;
   if (Pos('/TASKS=', Uppercase(GetCmdTail)) > 0) or (Pos('/MERGETASKS=', Uppercase(GetCmdTail)) > 0) then Exit;
   if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run',
     'Blackveil', ExistingRun) and (ExistingRun <> '') then
     WizardSelectTasks('autostart')
   else
     WizardSelectTasks('!autostart');
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  ExistingRun, OwnExe: String;
+begin
+  if CurUninstallStep = usPostUninstall then begin
+    OwnExe := '"' + ExpandConstant('{app}\Blackveil.exe') + '"';
+    if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Blackveil', ExistingRun) then
+      if Pos(Lowercase(OwnExe), Lowercase(ExistingRun)) = 1 then
+        RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Blackveil');
+  end;
 end;

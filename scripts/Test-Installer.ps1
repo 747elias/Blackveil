@@ -13,7 +13,7 @@ try {
     $setup = (Resolve-Path "artifacts/release/Blackveil-Setup-$version.exe").Path
     $installedExe = Join-Path $installDir 'Blackveil.exe'
     $logPath = Join-Path (Get-Location).Path 'artifacts/installer-smoke.log'
-    $setupProcess = Start-Process $setup -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/TASKS=autostart', "/DIR=`"$installDir`"", "/LOG=`"$logPath`"") -Wait -PassThru
+    $setupProcess = Start-Process $setup -ArgumentList @('/CURRENTUSER', '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/TASKS=autostart', "/DIR=`"$installDir`"", "/LOG=`"$logPath`"") -Wait -PassThru
     if ($setupProcess.ExitCode -ne 0 -or !(Test-Path $installedExe)) { throw 'Installation fehlgeschlagen.' }
     $key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey($runPath)
     try { if ($key.GetValue('Blackveil') -ne "`"$installedExe`" --autostart") { throw 'Autostart-Wert stimmt nicht überein.' } }

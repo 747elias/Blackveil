@@ -23,32 +23,38 @@ internal sealed class SettingsWindow : Form
         this.warning = warning;
         candidate = current;
         Text = "Blackveil – Einstellungen";
-        FormBorderStyle = FormBorderStyle.FixedDialog;
-        MaximizeBox = false; MinimizeBox = false;
+        FormBorderStyle = FormBorderStyle.Sizable;
+        MaximizeBox = true; MinimizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
         AutoScaleMode = AutoScaleMode.Dpi;
-        ClientSize = new Size(560, 440);
+        ClientSize = new Size(900, 700);
+        MinimumSize = new Size(860,600);
+        AppTheme.Form(this);
         KeyPreview = true;
-        var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(20), ColumnCount = 1, RowCount = 7 };
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        layout.Controls.Add(new Label { Text = "Shortcut für Schwarzbild ein / aus", AutoSize = true });
-        shortcutText.Text = current.ToString();
-        layout.Controls.Add(shortcutText);
+        var layout = AppTheme.Stack();
+        layout.Controls.Add(AppTheme.Title("Dein Tastenkürzel"));
+        layout.Controls.Add(AppTheme.Hint("Ein Griff. Alle Bildschirme schwarz. Noch einmal drücken, um zurückzukehren."));
+        var shortcutCard = AppTheme.Card("Schwarzbild ein / aus", "Dein aktuelles Tastenkürzel. Änderungen werden erst mit Speichern übernommen.");
+        shortcutText.Dock = DockStyle.None; shortcutText.Width = 530; shortcutText.Height = 46;
+        shortcutText.Text = current.ToString(); shortcutCard.Controls.Add(shortcutText);
         record.Click += (_, _) => { if (recording) { recording = false; RefreshCandidate(); } else BeginRecording(); };
-        layout.Controls.Add(record);
-        status.Text = warning?.Invoke() ?? "Tastenkombination aufnehmen oder unten frei auswählen. Hinweis: Windows kann Kombinationen reservieren oder abfangen; nicht jede Auswahl funktioniert.";
-        var picker = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, WrapContents = true };
+        shortcutCard.Controls.Add(record); layout.Controls.Add(shortcutCard);
+        var manualCard = AppTheme.Card("Frei zusammenstellen", "Alternativ eine Taste auswählen und die gewünschten Modifikatortasten ergänzen.");
+        var picker = new FlowLayoutPanel { AutoSize = true, MaximumSize = new Size(530,0), WrapContents = true, Margin = new Padding(0,0,0,8) };
         foreach (int code in Enumerable.Range(8, 247)) keyPicker.Items.Add(new KeyChoice(code));
         picker.Controls.Add(keyPicker); picker.Controls.Add(ctrl); picker.Controls.Add(alt); picker.Controls.Add(shift); picker.Controls.Add(win);
-        layout.Controls.Add(picker);
+        manualCard.Controls.Add(picker);
+        layout.Controls.Add(manualCard);
         keyPicker.SelectedIndexChanged += (_, _) => SelectManually();
         foreach (var box in new[] { ctrl, alt, shift, win }) box.CheckedChanged += (_, _) => SelectManually();
         RefreshPicker();
+        status.Text = warning?.Invoke() ?? "Hinweis: Windows kann reservierte Kombinationen abfangen. Deine Auswahl wird trotzdem gespeichert.";
+        status.ForeColor = AppTheme.Muted; status.MaximumSize = new Size(580,0); status.Margin = new Padding(0,0,0,16);
         layout.Controls.Add(status);
         var reset = new Button { Text = "Standard: Ctrl + Shift + Q", AutoSize = true };
         reset.Click += (_, _) => { recording = false; candidate = Shortcut.Default; RefreshCandidate(); };
-        layout.Controls.Add(reset);
-        var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft };
+        manualCard.Controls.Add(reset);
+        var buttons = new FlowLayoutPanel { AutoSize = true, Width = 580, FlowDirection = FlowDirection.RightToLeft };
         var cancel = new Button { Text = "Abbrechen", AutoSize = true, DialogResult = DialogResult.Cancel };
         var apply = new Button { Text = "Speichern", AutoSize = true };
         apply.Click += (_, _) =>
@@ -64,16 +70,10 @@ internal sealed class SettingsWindow : Form
             catch (Exception error) { status.Text = error.Message; }
         };
         buttons.Controls.Add(cancel); buttons.Controls.Add(apply); layout.Controls.Add(buttons);
-        if (updates is null) Controls.Add(layout);
-        else
-        {
-            ClientSize = new Size(590, 560);
-            var tabs = new TabControl { Dock = DockStyle.Fill };
-            var shortcutPage = new TabPage("Shortcut"); shortcutPage.Controls.Add(layout);
-            var updatePage = new TabPage("Updates"); updatePage.Controls.Add(new UpdateSettingsPanel(updates));
-            tabs.TabPages.Add(shortcutPage); tabs.TabPages.Add(updatePage); Controls.Add(tabs);
-            tabs.SelectedIndexChanged += (_, _) => { recording = false; RefreshCandidate(); };
-        }
+        AppTheme.Polish(layout);
+        shortcutText.Font = new Font("Segoe UI",18,FontStyle.Bold); shortcutText.BackColor = AppTheme.Tint; shortcutText.TextAlign = HorizontalAlignment.Center;
+        AppTheme.Button(record,true);
+        Controls.Add(AppTheme.Shell(layout, updates is null ? null : new UpdateSettingsPanel(updates), () => { recording = false; RefreshCandidate(); }));
         CancelButton = cancel;
         KeyUp += (_, e) =>
         {
@@ -87,6 +87,11 @@ internal sealed class SettingsWindow : Form
             CaptureShortcut(e.KeyData);
             e.Handled = true; e.SuppressKeyPress = true;
         };
+    }
+    internal void SelectPage(string name)
+    {
+        IEnumerable<Control> Children(Control parent) => parent.Controls.Cast<Control>().SelectMany(c => new[] { c }.Concat(Children(c)));
+        Children(this).OfType<Button>().Single(b => b.Name == "Nav" + name).PerformClick();
     }
     internal void BeginRecording()
     {

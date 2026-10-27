@@ -55,7 +55,7 @@ internal sealed class TrayContext : ApplicationContext
         messages = new MessageWindow(this);
         hotkeyAvailable = Native.RegisterHotKey(messages.Handle, hotkeyId, 0x4000 | shortcut.EffectiveModifiers, (uint)shortcut.Key);
         icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath!) ?? (Icon)SystemIcons.Application.Clone();
-        menu = new ContextMenuStrip();
+        menu = new ContextMenuStrip { ShowImageMargin = false, Font = new Font("Segoe UI",10), ForeColor = AppTheme.Ink, Renderer = new ToolStripProfessionalRenderer(new MenuColors()) };
         activationItem = menu.Items.Add("Schwarzbild aktivieren", null, (_, _) => Activate());
         var startup = new ToolStripMenuItem("Mit Windows starten") { CheckOnClick = false };
         startup.Click += (_, _) =>
@@ -70,7 +70,7 @@ internal sealed class TrayContext : ApplicationContext
             catch (Exception error) { Report("Autostart konnte nicht gelesen werden.", error); }
         };
         menu.Items.Add("Einstellungen …", null, (_, _) => ShowSettings());
-        menu.Items.Add("Info", null, (_, _) => MessageBox.Show($"Blackveil {Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)}\n\n{shortcut}: Schwarzbild ein/aus\n\nVorübergehender Sicht- und Eingabeschutz. Keine Windows-Sperre.\nCtrl + Alt + Entf und Sicherheitsdesktop bleiben verfügbar.", "Info – Blackveil", MessageBoxButtons.OK, MessageBoxIcon.Information));
+        menu.Items.Add("Info", null, (_, _) => ShowSettings("Info"));
         menu.Items.Add("Beenden", null, (_, _) => ExitThread());
         tray = new NotifyIcon { Icon = icon, Text = $"Blackveil – {shortcut}", ContextMenuStrip = menu, Visible = true };
         UpdateShortcutStatus();
@@ -103,7 +103,7 @@ internal sealed class TrayContext : ApplicationContext
         UpdateShortcutStatus();
     }
 
-    internal void ShowSettings()
+    internal void ShowSettings(string? page = null)
     {
         if (active || stopping) return;
         if (settingsWindow is not null) { settingsWindow.Activate(); return; }
@@ -113,6 +113,7 @@ internal sealed class TrayContext : ApplicationContext
         {
             using var dialog = new SettingsWindow(shortcut, ApplyShortcut, () => ShortcutWarning, updates);
             settingsWindow = dialog;
+            if (page is not null) dialog.Shown += (_,_) => dialog.SelectPage(page);
             dialog.ShowDialog();
         }
         finally

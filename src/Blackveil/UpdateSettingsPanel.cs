@@ -5,8 +5,8 @@ internal sealed class UpdateSettingsPanel : UserControl
     private readonly UpdateCoordinator coordinator;
     private readonly CheckBox search = new() { Text = "Automatisch nach Updates suchen", AutoSize = true };
     private readonly CheckBox install = new() { Text = "Updates automatisch und ohne Rückfrage installieren", AutoSize = true };
-    private readonly ComboBox checkWhen = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 230 };
-    private readonly ComboBox installWhen = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 230 };
+    private readonly ComboBox checkWhen = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 320 };
+    private readonly ComboBox installWhen = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 320 };
     private readonly DateTimePicker checkTime = TimePicker(), installTime = TimePicker();
     private readonly Label status = new() { AutoSize = true, MaximumSize = new Size(490, 0) };
     private readonly Button manual = new() { Text = "Jetzt nach Updates suchen", AutoSize = true };
@@ -20,12 +20,25 @@ internal sealed class UpdateSettingsPanel : UserControl
         installWhen.Items.AddRange(["Sobald ein Update gefunden wird", "Beim nächsten Start", "Täglich zur Uhrzeit"]);
         checkWhen.SelectedIndex = (int)p.CheckWhen; installWhen.SelectedIndex = (int)p.InstallWhen;
         checkTime.Value = DateTime.Today.AddMinutes(p.CheckMinute); installTime.Value = DateTime.Today.AddMinutes(p.InstallMinute);
-        var layout = new FlowLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(15), FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true };
-        layout.Controls.Add(search); layout.Controls.Add(new Label { Text = "Automatisch suchen:", AutoSize = true });
-        layout.Controls.Add(checkWhen); layout.Controls.Add(checkTime); layout.Controls.Add(install);
-        layout.Controls.Add(new Label { Text = "Automatisch installieren:", AutoSize = true }); layout.Controls.Add(installWhen); layout.Controls.Add(installTime);
-        layout.Controls.Add(new Label { AutoSize = true, MaximumSize = new Size(490, 0), Text = "Ohne automatische Installation fragt Blackveil vor der Installation. Bei ausgeschalteter automatischer Suche wird nur auf Knopfdruck gesucht. Zeitpläne gelten, solange die App läuft; während des Schwarzbilds werden sie verschoben." });
-        layout.Controls.Add(save); layout.Controls.Add(manual); layout.Controls.Add(status); Controls.Add(layout);
+        var layout = AppTheme.Stack();
+        layout.Controls.Add(AppTheme.Title("Immer auf dem neuesten Stand"));
+        layout.Controls.Add(AppTheme.Hint("Du entscheidest, wann Blackveil nach Updates sucht und sie installiert."));
+        var searchCard = AppTheme.Card("Updates finden", "Automatische Suche und manuelle Suche bleiben unabhängig voneinander.");
+        searchCard.Controls.Add(search);
+        var searchTime = new FlowLayoutPanel { AutoSize = true, WrapContents = true, MaximumSize = new Size(530,0) };
+        searchTime.Controls.Add(checkWhen); searchTime.Controls.Add(checkTime); searchCard.Controls.Add(searchTime); layout.Controls.Add(searchCard);
+        var installCard = AppTheme.Card("Updates installieren", "Ohne Installationsautomatik fragt Blackveil vor dem Update. Zeitpläne gelten, solange die App läuft.");
+        installCard.Controls.Add(install);
+        var installTimeRow = new FlowLayoutPanel { AutoSize = true, WrapContents = true, MaximumSize = new Size(530,0) };
+        installTimeRow.Controls.Add(installWhen); installTimeRow.Controls.Add(installTime); installCard.Controls.Add(installTimeRow);
+        installCard.Controls.Add(AppTheme.Hint(UpdateInstaller.IsMachineInstalled(Environment.ProcessPath!)
+            ? "Für alle Benutzer installiert: Windows fragt bei Updates nach Administratorrechten. Diese Bestätigung kann nicht übersprungen werden."
+            : "Updates werden im Hintergrund installiert. Während des Schwarzbilds wird die Installation verschoben.",530));
+        layout.Controls.Add(installCard);
+        var actions = new FlowLayoutPanel { AutoSize = true, WrapContents = true, MaximumSize = new Size(580,0) };
+        actions.Controls.Add(save); actions.Controls.Add(manual); layout.Controls.Add(actions);
+        status.ForeColor = AppTheme.Muted; status.MaximumSize = new Size(580,0); status.Margin = new Padding(0,8,0,0);
+        layout.Controls.Add(status); Controls.Add(layout); AppTheme.Polish(layout);
         search.CheckedChanged += (_, _) => EnableFields(); install.CheckedChanged += (_, _) => EnableFields();
         checkWhen.SelectedIndexChanged += (_, _) => EnableFields(); installWhen.SelectedIndexChanged += (_, _) => EnableFields();
         save.Click += (_, _) =>

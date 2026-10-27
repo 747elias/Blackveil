@@ -9,20 +9,29 @@ internal sealed record UpdateResult(bool Success, string Message, string? Versio
 { public UpdateResult() : this(false, "") { } }
 internal static class UpdateInstaller
 {
-    internal static bool IsInstalled(string exe)
+    private const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\{3E29D02D-B2C1-44D7-8E90-C53380C6D534}_is1";
+    private static bool MatchesInstall(RegistryHive hive, string exe)
     {
-        using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\{3E29D02D-B2C1-44D7-8E90-C53380C6D534}_is1");
-        return key?.GetValue("InstallLocation") is string directory &&
-            Path.GetFullPath(directory).TrimEnd('\\').Equals(Path.GetDirectoryName(Path.GetFullPath(exe)), StringComparison.OrdinalIgnoreCase);
+        foreach (var view in new[] { RegistryView.Registry64, RegistryView.Registry32 })
+        {
+            using var root = RegistryKey.OpenBaseKey(hive, view);
+            using var key = root.OpenSubKey(UninstallKey);
+            if (key?.GetValue("InstallLocation") is string directory &&
+                Path.GetFullPath(directory).TrimEnd('\\', '/').Equals(Path.GetDirectoryName(Path.GetFullPath(exe)), StringComparison.OrdinalIgnoreCase)) return true;
+        }
+        return false;
     }
+    internal static bool IsMachineInstalled(string exe) => MatchesInstall(RegistryHive.LocalMachine, exe);
+    internal static bool IsInstalled(string exe) => MatchesInstall(RegistryHive.CurrentUser, exe) || IsMachineInstalled(exe);
     internal static void LaunchHelper(string directory, string package, string hash, bool installed, Version version)
     {
         string target = Environment.ProcessPath!;
         if (!Path.GetFileName(target).Equals("Blackveil.exe", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Updates benötigen die veröffentlichte Blackveil.exe.");
         if ((File.GetAttributes(target) & FileAttributes.ReadOnly) != 0) throw new IOException("Die Blackveil.exe ist schreibgeschützt.");
         // Verify write access before shutting down the working instance.
+        bool machine = IsMachineInstalled(target);
         string probe = Path.Combine(Path.GetDirectoryName(target)!, Guid.NewGuid() + ".tmp");
-        File.WriteAllText(probe, ""); File.Delete(probe);
+        if (!machine) { File.WriteAllText(probe, ""); File.Delete(probe); }
         string helper = Path.Combine(directory, "Blackveil-Updater.exe");
         File.Copy(target, helper, true);
         using var current = Process.GetCurrentProcess();
@@ -37,7 +46,7 @@ internal static class UpdateInstaller
     {
         UpdatePlan? plan = null;
         string? backup = null;
-        bool parentExited = false;
+        bool parentExited = false, machine = false;
         var storage = new UpdateStorage();
         try
         {
@@ -60,13 +69,15 @@ internal static class UpdateInstaller
             catch (ArgumentException) { /* Already exited before helper initialization. */ }
             parentExited = true;
             ReleaseClient.VerifyAsync(plan.Package, plan.Hash, CancellationToken.None).GetAwaiter().GetResult();
-            backup = plan.Target + ".update-backup";
+            machine = IsMachineInstalled(plan.Target);
+            backup = machine ? Path.Combine(Path.GetDirectoryName(fullPlan)!, "previous.exe") : plan.Target + ".update-backup";
             File.Copy(plan.Target, backup, true);
             if (plan.Installed)
             {
-                var installer = new ProcessStartInfo(plan.Package) { UseShellExecute = false, CreateNoWindow = true };
+                var installer = new ProcessStartInfo(plan.Package) { UseShellExecute = machine, CreateNoWindow = !machine };
+                if (machine) installer.Verb = "runas";
                 foreach (string argument in new[] { "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-", "/CLOSEAPPLICATIONS", "/NORESTARTAPPLICATIONS",
-                    "/DIR=" + Path.GetDirectoryName(plan.Target), "/TASKS=" + (plan.Autostart ? "autostart" : ""),
+                    (machine ? "/ALLUSERS" : "/CURRENTUSER"), "/DIR=" + Path.GetDirectoryName(plan.Target), "/TASKS=" + (plan.Autostart ? "autostart" : ""),
                     "/LOG=" + Path.Combine(Path.GetDirectoryName(fullPlan)!, "installer.log") }) installer.ArgumentList.Add(argument);
                 using var process = Process.Start(installer) ?? throw new IOException("Installer konnte nicht gestartet werden.");
                 // Wait until completion: never restore files while an installer is still writing.
@@ -93,8 +104,8 @@ internal static class UpdateInstaller
             {
                 try
                 {
-                    if (backup is not null && File.Exists(backup)) File.Copy(backup, plan.Target, true);
-                    storage.Save("update-result.json", new UpdateResult(false, "Update fehlgeschlagen; die vorherige EXE wurde beibehalten bzw. wiederhergestellt. " + error.Message, plan.Version));
+                    if (!machine && backup is not null && File.Exists(backup)) File.Copy(backup, plan.Target, true);
+                    storage.Save("update-result.json", new UpdateResult(false, (machine ? "Systemweites Update nicht abgeschlossen. Bitte die Installation bei Bedarf mit dem Setup reparieren. " : "Update fehlgeschlagen; die vorherige EXE wurde beibehalten bzw. wiederhergestellt. ") + error.Message, plan.Version));
                     Restart(plan.Target);
                 }
                 catch (Exception recovery) { Log.Write("Update recovery failed", recovery); MessageBox.Show("Blackveil konnte nicht neu gestartet werden. Bitte die App manuell starten. " + error.Message, "Blackveil – Update"); }

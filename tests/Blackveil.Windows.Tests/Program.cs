@@ -11,6 +11,7 @@ internal static class Program
     private static int Main(string[] args)
     {
         if (args is ["--assert-installed", var exe]) { Require(UpdateInstaller.IsInstalled(exe), "Installed updater mode detected"); return 0; }
+        if (args is ["--assert-machine-installed", var machineExe]) { Require(UpdateInstaller.IsMachineInstalled(machineExe), "Machine updater mode detected"); return 0; }
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
         using var receiver = new Receiver();
         InputHooks? hooks = null;

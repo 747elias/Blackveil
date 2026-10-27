@@ -55,7 +55,8 @@ function Exercise-Update([string]$Target, [string]$Payload, [bool]$IsInstalled, 
     Stop-Blackveil
 }
 try {
-    if (Test-Path "$dataRoot/settings.json") { throw 'Use a clean Windows test profile.' }
+    if (Test-Path (Join-Path $env:ProgramFiles 'Blackveil')) { throw 'Use a machine without an existing Blackveil installation.' }
+    if ((Test-Path $dataRoot) -and (Get-ChildItem $dataRoot -Recurse -File | Select-Object -First 1)) { throw 'Use a clean Windows test profile.' }
     if ((Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name Blackveil -ErrorAction SilentlyContinue)) { throw 'Existing Blackveil autostart must not be changed by tests.' }
     $allowCleanup = $true
     New-Item $testRoot,$dataRoot -ItemType Directory -Force | Out-Null
@@ -86,6 +87,27 @@ try {
     Exercise-Update "$installed/Blackveil.exe" (Resolve-Path "artifacts/release/Blackveil-Setup-$version.exe").Path $true
     $run = (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name Blackveil).Blackveil
     if ($run -ne "`"$installed\Blackveil.exe`" --autostart") { throw 'Installer update changed autostart.' }
+    $removeUser = Start-Process "$installed/unins000.exe" -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -Wait -PassThru
+    if ($removeUser.ExitCode -ne 0) { throw 'User fixture uninstall failed.' }
+    $installed = Join-Path $env:ProgramFiles 'Blackveil'
+    $machineSetup = Start-Process (Resolve-Path "artifacts/release/Blackveil-Setup-$version.exe").Path -ArgumentList '/ALLUSERS /VERYSILENT /SUPPRESSMSGBOXES /NORESTART' -Wait -PassThru
+    if ($machineSetup.ExitCode -ne 0 -or !(Test-Path "$installed/Blackveil.exe")) { throw 'Machine installation/default Program Files path failed.' }
+    $machineKey = 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{3E29D02D-B2C1-44D7-8E90-C53380C6D534}_is1'
+    if ((Get-ItemProperty $machineKey).DisplayVersion -ne $version) { throw 'Machine uninstall registration missing.' }
+    dotnet run --project tests/Blackveil.Windows.Tests -c Release --no-build -- --assert-machine-installed "$installed/Blackveil.exe"
+    if ($LASTEXITCODE) { throw 'Machine updater mode detection failed.' }
+    New-Item $dataRoot -ItemType Directory -Force | Out-Null
+    @{ AutoCheck=$false; AutoInstall=$false; CheckWhen=0; InstallWhen=0; CheckMinute=1080; InstallMinute=1200 } | ConvertTo-Json | Set-Content "$dataRoot/update-settings.json"
+    @{ LastSeenVersion='2.1.0' } | ConvertTo-Json | Set-Content "$dataRoot/update-state.json"
+    @{ Key=75; Modifiers=4 } | ConvertTo-Json | Set-Content "$dataRoot/settings.json"
+    # Older executable fixture inside a machine installation exercises a real binary replacement.
+    Copy-Item "$testRoot/Blackveil.exe" "$installed/Blackveil.exe" -Force
+    New-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name Blackveil -Value "`"$installed\Blackveil.exe`" --autostart" -PropertyType String -Force | Out-Null
+    Exercise-Update "$installed/Blackveil.exe" (Resolve-Path "artifacts/release/Blackveil-Setup-$version.exe").Path $true
+    if ((Get-ItemProperty $machineKey).DisplayVersion -ne $version) { throw 'Machine scope was not preserved.' }
+    $runAfterMachineUpdate = (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name Blackveil).Blackveil
+    if ($runAfterMachineUpdate -ne "`"$installed\Blackveil.exe`" --autostart") { throw 'Machine update changed personal autostart.' }
+    Write-Host 'PASS: machine installation to Program Files, HKLM registration, machine update with elevation path, personal settings and autostart preservation.'
     Write-Host 'PASS: real 2.0.1 -> current portable and installed upgrades, silent setup, restart, changes window, settings/autostart preservation, checksum failure recovery.'
 } catch {
     Get-Content "$dataRoot/logs/*.log" -ErrorAction SilentlyContinue | Write-Host
@@ -102,3 +124,6 @@ try {
     }
     Pop-Location
 }
+
+if (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name Blackveil -ErrorAction SilentlyContinue) { throw 'Uninstall left autostart for the current user.' }
+if (Test-Path 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{3E29D02D-B2C1-44D7-8E90-C53380C6D534}_is1') { throw 'Machine uninstall left registration.' }

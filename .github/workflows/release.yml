@@ -39,6 +39,8 @@ jobs:
           }
       - name: Package portable EXE, ZIP, installer and checksums
         run: ./scripts/Package.ps1
+      - name: Preview installer UI and scope selection
+        run: ./scripts/Test-SetupUi.ps1
       - name: Install, run and uninstall the packaged app
         run: ./scripts/Test-Installer.ps1
       - name: Exercise portable and installed updates
@@ -48,6 +50,11 @@ jobs:
           name: Blackveil-release
           path: artifacts/release/*
           if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: ui-screenshots
+          path: artifacts/screenshots/*.png
       - name: Publish GitHub Release and verify all assets
         if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh

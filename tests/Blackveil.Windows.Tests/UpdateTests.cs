@@ -66,9 +66,26 @@ internal static class UpdateTests
             { Application.DoEvents(); Thread.Sleep(5); }
             Require(updates.Status.Contains("aktuell"), "Manual search works with automatic search disabled");
             window.Close();
+            using (var settings = new SettingsWindow(Blackveil.Core.Shortcut.Default, _ => { }, null, updates))
+            {
+                settings.Show(); Application.DoEvents();
+                Capture(settings,"settings-shortcut");
+                settings.SelectPage("Updates"); Application.DoEvents(); Capture(settings,"settings-updates");
+                settings.SelectPage("Info"); Application.DoEvents(); Capture(settings,"settings-info");
+                settings.Close();
+            }
+            using (var changes = new ChangesWindow(UpdateCoordinator.CurrentVersion.ToString(), "Version " + UpdateCoordinator.CurrentVersion + "\r\n\r\n- Neues Design mit klarer Navigation\r\n- Installation für dich oder alle Benutzer\r\n- Deine Einstellungen bleiben persönlich"))
+            { changes.Show(); Application.DoEvents(); Capture(changes,"changes"); changes.Close(); }
             Console.WriteLine("PASS: update metadata, origin restrictions, valid download, checksum rejection, settings GUI toggles/schedules and manual search.");
         }
         finally { Directory.Delete(root, true); }
+    }
+    private static void Capture(Form form, string name)
+    {
+        Directory.CreateDirectory("artifacts/screenshots");
+        using var bitmap = new Bitmap(form.Width,form.Height);
+        form.DrawToBitmap(bitmap,new Rectangle(Point.Empty,bitmap.Size));
+        bitmap.Save("artifacts/screenshots/" + name + ".png",System.Drawing.Imaging.ImageFormat.Png);
     }
     private static IEnumerable<Control> Descendants(Control root) => root.Controls.Cast<Control>().SelectMany(c => new[] { c }.Concat(Descendants(c)));
     private static void Require(bool value, string name) { if (!value) throw new InvalidOperationException(name); }
