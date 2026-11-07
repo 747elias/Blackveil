@@ -5,7 +5,7 @@
 - English throughout the app: tray menu, shortcut recording, Settings, About, update prompts, status messages, errors and What's new.
 - English-only installer, including scope selection, welcome text and branded artwork. Existing personal and system-wide installations keep their scope and settings.
 - Presentation-first README with a visual introduction, clear download choices and the prepare → hide → reveal → continue workflow.
-- English documentation, historical changelog entries, packaging messages and repository description.
+- English documentation, historical changelog entries and packaging messages.
 - English UI is selected independently of Windows display language; regional date/time formats and keyboard layouts are preserved.
 - Updated Windows integration checks and screenshots, including migration from the previous German 2.1.1 release.
 

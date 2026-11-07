@@ -36,6 +36,10 @@ Blackveil hides all connected displays, including your laptop. You cannot operat
 - **Updates on your terms.** Check manually or schedule checks and installation independently. See what changed after updating.
 - **Install your way.** Just for you, for all users, or portable. The tray app runs without administrator privileges. No separate .NET runtime is required.
 
+<p align="center">
+  <img src="docs/assets/settings.png" alt="Blackveil Settings: record your shortcut or choose its keys and modifiers" width="760">
+</p>
+
 ## Install and get started
 
 | Download | What it does |
