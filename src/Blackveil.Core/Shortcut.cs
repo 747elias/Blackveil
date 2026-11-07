@@ -15,9 +15,9 @@ public sealed record Shortcut(int Key, uint Modifiers)
         8 => "Backspace", 9 => "Tab", 13 => "Enter", 16 => "Shift", 17 => "Ctrl", 18 => "Alt",
         27 => "Escape", 32 => "Space", 33 => "PageUp", 34 => "PageDown", 35 => "End", 36 => "Home",
         37 => "Left", 38 => "Up", 39 => "Right", 40 => "Down", 45 => "Insert", 46 => "Delete",
-        0x5B => "Win (links)", 0x5C => "Win (rechts)",
-        0xA0 => "Shift (links)", 0xA1 => "Shift (rechts)", 0xA2 => "Ctrl (links)", 0xA3 => "Ctrl (rechts)",
-        0xA4 => "Alt (links)", 0xA5 => "Alt (rechts)",
+        0x5B => "Win (left)", 0x5C => "Win (right)",
+        0xA0 => "Shift (left)", 0xA1 => "Shift (right)", 0xA2 => "Ctrl (left)", 0xA3 => "Ctrl (right)",
+        0xA4 => "Alt (left)", 0xA5 => "Alt (right)",
         _ => $"VK 0x{key:X2}"
     };
     public override string ToString() => string.Join(" + ", new[] {

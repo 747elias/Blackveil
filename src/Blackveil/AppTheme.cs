@@ -34,7 +34,7 @@ internal static class AppTheme
     {
         foreach (Control child in root.Controls)
         {
-            if (child is Button b) Button(b, b.Text is "Speichern" or "Update-Einstellungen speichern" or "Schliessen");
+            if (child is Button b) Button(b, b.Text is "Save" or "Save update settings" or "Close");
             else if (child is TextBox text) { text.BorderStyle = BorderStyle.FixedSingle; text.BackColor = Color.White; text.ForeColor = Ink; }
             else if (child is ComboBox combo) { combo.FlatStyle = FlatStyle.Flat; combo.BackColor = Canvas; combo.ForeColor = Ink; combo.IntegralHeight = false; combo.DropDownHeight = 260; }
             else if (child is CheckBox box) { box.ForeColor = Ink; box.Padding = new Padding(0,5,8,5); box.Cursor = Cursors.Hand; }
@@ -51,15 +51,15 @@ internal static class AppTheme
         var logo = new BrandMark { Location = new Point(20,24), Size = new Size(44,44) };
         nav.Controls.Add(logo);
         nav.Controls.Add(new Label { Text = "BLACKVEIL", ForeColor = Color.White, AutoSize = true, Font = new Font("Segoe UI",12,FontStyle.Bold), Location = new Point(20,84) });
-        nav.Controls.Add(new Label { Text = "Dein Bildschirm.\nDein Moment.", ForeColor = Color.FromArgb(148,172,186), AutoSize = true, Location = new Point(20,116) });
+        nav.Controls.Add(new Label { Text = "Your reveal.\nYour timing.", ForeColor = Color.FromArgb(148,172,186), AutoSize = true, Location = new Point(20,116) });
         var about = Stack();
-        about.Controls.Add(Title("Über Blackveil")); about.Controls.Add(Hint("Weniger Ablenkung. Mehr Privatsphäre."));
-        var info = Card("Blackveil " + UpdateCoordinator.CurrentVersion, "Vorübergehender Sicht- und Eingabeschutz für deinen Windows-Desktop. Keine Windows-Sperre.");
+        about.Controls.Add(Title("About Blackveil")); about.Controls.Add(Hint("Keep the focus on your presentation."));
+        var info = Card("Blackveil " + UpdateCoordinator.CurrentVersion, "Hide every display until the moment you choose. A temporary visual and input shield, not a Windows lock.");
         string exe = Environment.ProcessPath!;
-        string mode = UpdateInstaller.IsMachineInstalled(exe) ? "Für alle Benutzer" : UpdateInstaller.IsInstalled(exe) ? "Nur für dich" : "Portable Version";
+        string mode = UpdateInstaller.IsMachineInstalled(exe) ? "All users" : UpdateInstaller.IsInstalled(exe) ? "Just you" : "Portable";
         info.Controls.Add(Hint("Installation: " + mode));
-        info.Controls.Add(Hint("Persönliche Einstellungen und Autostart gelten nur für dein Windows-Konto. Systemweite Updates benötigen eine Windows-Bestätigung."));
-        info.Controls.Add(Hint("Ctrl + Alt + Entf und geschützte Systemfunktionen bleiben verfügbar.\nMIT-Lizenz · Nicht code-signiert")); about.Controls.Add(info);
+        info.Controls.Add(Hint("Settings and startup preferences belong to your Windows account. System-wide updates require Windows administrator approval."));
+        info.Controls.Add(Hint("Ctrl + Alt + Delete and protected system functions stay available.\nMIT license · Not code-signed")); about.Controls.Add(info);
         var buttons = new List<Button>();
         bool initialized = false;
         void Navigate(Control page, Button selected)
@@ -73,7 +73,7 @@ internal static class AppTheme
             var b = new Button { Name = "Nav" + text, Text = text, Size = new Size(150,44), Location = new Point(20,192 + buttons.Count * 54), TextAlign = ContentAlignment.MiddleLeft, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Padding = new Padding(10,0,0,0) };
             b.FlatAppearance.BorderSize = 0; b.Click += (_,_) => Navigate(page,b); buttons.Add(b); nav.Controls.Add(b);
         }
-        Add("Tastenkürzel",shortcuts); if (updates is not null) Add("Updates",updates); Add("Info",about);
+        Add("Shortcut",shortcuts); if (updates is not null) Add("Updates",updates); Add("About",about);
         var version = new Label { Text = "VERSION " + UpdateCoordinator.CurrentVersion, ForeColor = Color.FromArgb(115,145,162), Dock = DockStyle.Bottom, Height = 28, Font = new Font("Segoe UI",8,FontStyle.Bold) };
         nav.Controls.Add(version); root.Controls.Add(nav,0,0); root.Controls.Add(host,1,0);
         root.Disposed += (_,_) => { shortcuts.Dispose(); updates?.Dispose(); about.Dispose(); };

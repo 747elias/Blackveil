@@ -12,6 +12,11 @@ internal static class Program
     {
         if (args is ["--assert-installed", var exe]) { Require(UpdateInstaller.IsInstalled(exe), "Installed updater mode detected"); return 0; }
         if (args is ["--assert-machine-installed", var machineExe]) { Require(UpdateInstaller.IsMachineInstalled(machineExe), "Machine updater mode detected"); return 0; }
+        System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("de-CH");
+        System.Globalization.CultureInfo.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo("de-DE");
+        AppLanguage.Initialize();
+        Require(System.Globalization.CultureInfo.CurrentUICulture.Name == "en-US" &&
+            System.Globalization.CultureInfo.CurrentCulture.Name == "de-CH", "English UI keeps the user's regional date/time format");
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
         using var receiver = new Receiver();
         InputHooks? hooks = null;
@@ -137,7 +142,7 @@ internal static class Program
                     if (dialog.Candidate != target) return;
                     CustomRelease(dialog.Candidate);
                     stage = 2;
-                    Descendants(dialog).OfType<Button>().Single(b => b.Text == "Speichern").PerformClick();
+                    Descendants(dialog).OfType<Button>().Single(b => b.Text == "Save").PerformClick();
                 }
             }
             catch (Exception error) { failure = error; driver.Stop(); dialog?.Close(); }

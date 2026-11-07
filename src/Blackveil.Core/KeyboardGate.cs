@@ -9,7 +9,7 @@ public sealed class KeyboardGate
     public KeyboardGate(IEnumerable<int> initiallyDown, Shortcut? shortcut = null)
     {
         this.shortcut = shortcut ?? Shortcut.Default;
-        if (!this.shortcut.IsValid) throw new ArgumentException("Ungültiger Shortcut.", nameof(shortcut));
+        if (!this.shortcut.IsValid) throw new ArgumentException("Invalid shortcut.", nameof(shortcut));
         down.UnionWith(initiallyDown);
     }
     private bool Held(int generic, int left, int right) => down.Contains(generic) || down.Contains(left) || down.Contains(right);

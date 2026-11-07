@@ -25,7 +25,7 @@ internal sealed class VeilWindow : Form
     {
         base.OnHandleCreated(e);
         if (!Native.RegisterTouchWindow(Handle, 0))
-            throw new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error(), "Touch-Empfang konnte nicht aktiviert werden.");
+            throw new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error(), "Touch input handling could not be enabled.");
     }
     protected override void OnPaint(PaintEventArgs e) => e.Graphics.Clear(Color.Black);
     protected override void OnFormClosing(FormClosingEventArgs e)

@@ -33,9 +33,9 @@ internal sealed class InputHooks : IDisposable
         {
             // A stalled hook owner cannot safely be retained.
             Environment.Exit(2);
-            throw new TimeoutException("Eingabeschutz konnte nicht gestartet werden.");
+            throw new TimeoutException("Input protection could not be started.");
         }
-        if (startupError is not null) { Dispose(); throw new InvalidOperationException("Eingabeschutz konnte nicht gestartet werden.", startupError); }
+        if (startupError is not null) { Dispose(); throw new InvalidOperationException("Input protection could not be started.", startupError); }
     }
 
     private void Run()

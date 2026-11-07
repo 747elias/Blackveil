@@ -1,49 +1,65 @@
-# Manueller Testplan
+# Manual test plan
 
-Auf einer freien Windows-11-Testsitzung beginnen. Vor jedem Test wissen, dass Ctrl + Alt + Entf weiterhin funktioniert. Blackveil nie als Ersatz einer Windows-Sperre bewerten. Ergebnisse mit Windows-Version, Release, Hardware und Datum festhalten.
+Use an unlocked, dedicated Windows 11 test session. Know that Ctrl + Alt + Delete remains available before each test. Blackveil must never be assessed as a replacement for Windows locking. Record the app version, Windows build, hardware, date and result.
 
-| Bereich | Durchführung | Erwartung |
-|---|---|---|
-| Tray / Instanz | EXE starten, nochmals starten, Info öffnen | Nur ein Tray-Symbol, kein Hauptfenster, Version 2.1.1 |
-| Globaler Hotkey | Notepad, Browser und Vollbild-App fokussieren; Ctrl+Shift+Q drücken | Schwarzbild aus jedem normalen Vordergrundprogramm |
-| Wiederholung | Q während des ersten Hotkeys zehn Sekunden halten, loslassen; erneut drücken und loslassen | Einmal an, erst durch zweite Betätigung aus; kein Flackern/Reaktivieren |
-| Hook / Hotkey | Linke/rechte Ctrl-/Shift-Kombinationen, Q zuerst und zuletzt loslassen; 20 Zyklen | Jeder gültige neue Hotkey entsperrt; keine hängenden Modifikatoren danach |
-| Einstellungen | Tray links anklicken; Aufnehmen; Ctrl+Alt+K drücken; Speichern; beenden/neustarten; Standard und Abbrechen prüfen | Kombination wird erkannt und bleibt nach Neustart erhalten; nur Speichern übernimmt; beide Umschaltpfade nutzen neuen Shortcut |
-| Shortcut-Konflikt | Belegten Shortcut in Einstellungen speichern | Neue Einstellung wird gespeichert, Hinweis erscheint; solange nicht registriert, bleibt Schwarzbild deaktiviert und Einstellungen erreichbar |
-| Kollision | In separatem Tool Ctrl+Shift+Q registrieren, Blackveil starten | Tray startet, Einstellungen zeigen Hinweis; keine Schwarzbildfenster oder Eingabe-Hooks aktiviert |
-| Tastatur | Notepad mit ungespeichertem Testtext im Hintergrund; Zeichen, Escape, Alt+F4, Win, Alt+Tab, Multimedia testen | Gewöhnliche Eingaben ändern den Hintergrund nicht; Escape/Alt+F4 beenden nicht; geschützte Systemfunktionen gesondert erfassen |
-| Maus | Vorher Klickzähler/Editor öffnen; klicken, doppelklicken, rechtsklicken, scrollen, bewegen | Keine Bedienung dahinter, kein Schliessen; Cursor unsichtbar und danach sichtbar. Auch während eines bereits begonnenen Ziehvorgangs aktivieren; nach dem Verlassen bleiben keine Maustasten hängen |
-| Monitore / DPI | 100 %, 150 %, 200 % kombinieren; negative Koordinaten, Hochformat, primären Monitor wechseln | Jeder Monitor vollständig schwarz, inklusive Taskleiste; keine sichtbaren Ränder |
-| Hotplug | Im aktiven und inaktiven Modus Monitor/Dock anschliessen/entfernen, Auflösung ändern | Fenster passen sich an; kein festhängender Eingabeschutz |
-| Touch | Auf jedem Touchscreen tippen, doppeltippen, lang drücken, mehrere Finger, wischen, zoomen | Fenster verwerfen Touch/Gesten, kein Durchreichen oder Schliessen; OEM/Systemgesten als Grenze erfassen |
-| Stift | Tippen, Hover, Seitentaste, Radierer, Windows Ink | Keine Bedienung darunter; Grenzen geschützter Herstellerfunktionen dokumentieren |
-| Sicherheitsdesktop | Ctrl+Alt+Entf; separat UAC auslösen | Systemoberfläche erreichbar; Blackveil umgeht/blockiert nichts, Schwarzbild wird vorsorglich beendet |
-| UIPI | Erhöhten Editor und normale App vergleichen | Einschränkungen protokollieren; keine Administratorrechte anfordern |
-| Standby / Sitzung | Suspend/Resume, Sperren/Entsperren, RDP-Wechsel | Vorsorglich deaktiviert; anschliessend neuer Hotkey funktionsfähig |
-| Fehler / Absturz | Im Debugger Ausnahme während Fenstererstellung auslösen; Hook-Thread und UI-Stillstand prüfen; Prozess im Task-Manager beenden | Keine bleibenden Fenster/Hooks; Cursor zurück; UI-Hänger beendet Prozess nach ca. 10 s |
-| Autostart | Installer-Option an/aus, Tray umschalten, Registry vergleichen, ab-/anmelden | Ein HKCU-Wert, korrekte gemeinsame Vorauswahl, Start ohne Schwarzbild |
-| Installer / Upgrade | Normaler Benutzer, Pfad mit Leerzeichen; über bestehende Installation installieren | Keine Erhöhung, Version konsistent, laufende Instanz muss beendet werden |
-| Deinstallation | Autostart per Menü einschalten, App beenden, deinstallieren | EXE, eigener Run-Wert, Verknüpfung und Logs entfernt; fremde Run-Werte unverändert |
-| Leerlauf | Task-Manager mehrere Minuten beobachten | Nahezu 0 % CPU ohne periodische App-Timer; Speichernutzung dokumentieren |
+## Core behavior
 
-## Automatisierte Nachweise
+| Area | Steps | Expected result |
+| --- | --- | --- |
+| Tray / one instance | Start the EXE twice; open About. | One tray icon, no main window; About matches the release version. |
+| Global shortcut | Focus Notepad, a browser and a full-screen app; press Ctrl + Shift + Q. | Blackout activates from ordinary foreground apps. |
+| Key repeat | Hold Q for ten seconds during activation; release; press and release the shortcut again. | Activates once, exits only on the next press; no flickering or repeat activation. |
+| Hook / shortcut interaction | Use left/right Ctrl and Shift; release Q first and last; repeat 20 cycles. | Every new valid chord exits; no stuck modifiers afterward. |
+| Settings | Left-click the tray; record Ctrl + Alt + K; Save; restart; test Default and Cancel. | Saved combination persists; drafts are discarded; activation and exit share the new shortcut. |
+| Unavailable shortcut | Reserve a shortcut using another app, then save it in Blackveil and restart. | Choice is saved, warning appears, blackout stays disabled until registration succeeds, Settings stays accessible. |
+| Startup collision | Reserve Ctrl + Shift + Q elsewhere before launching a default-configured Blackveil. | Tray starts with a clear warning; no overlays or input hooks activate. |
+| Keyboard | Put an editor with disposable text behind blackout; try typing, Escape, Alt + F4, Win, Alt + Tab and media keys. | Ordinary input does not operate the background; Escape/Alt + F4 do not close overlays. Record protected-system exceptions separately. |
+| Mouse | Click, double-click, right-click, scroll and move; also activate during a drag. | No operation behind overlays or accidental closing; cursor hidden, then restored; no stuck buttons afterward. |
+| Displays / DPI | Combine 100%, 150% and 200% scaling, negative coordinates, portrait mode and primary-display changes. | Every screen, including taskbars, is black with no visible gaps. |
+| Hotplug | Connect/disconnect monitors and docks; change resolution while active and inactive. | Coverage adapts; input interception does not remain stuck. |
+| Touch | Tap, double-tap, hold, swipe, pinch and use multiple fingers on each touchscreen. | Overlay discards input without passing it through or closing. Document OEM/system gesture limits. |
+| Pen | Test tapping, hover, side buttons, eraser and Windows Ink. | No ordinary operation behind overlays; document protected/vendor behavior. |
+| Secure desktop | Press Ctrl + Alt + Delete; separately trigger UAC. | Protected surfaces remain accessible; blackout ends as a precaution. Nothing is bypassed or blocked. |
+| UIPI | Compare an elevated editor with an ordinary app. | Record input/cleanup limitations; the tray app does not request elevation. |
+| Standby / session | Suspend/resume, lock/unlock and change RDP sessions. | Blackout deactivates; the shortcut works again afterward. |
+| Failure / crash | Inject an exception during overlay creation; interrupt the hook thread; hang the UI; kill the process. | No lasting overlays or hooks; cursor restored; UI watchdog terminates after about ten seconds. |
+| Startup | Toggle the installer task and tray preference; inspect HKCU; sign out/in. | One shared Run value, correct task preselection, background startup without blackout. |
+| Personal setup / upgrade | Use a standard account and a path containing spaces; install over an existing personal copy. | No elevation; matching file/app versions; running copy must exit. |
+| Uninstall | Enable startup, quit, uninstall. | Installed EXE and shortcuts removed; current installation's startup entry removed. Personal uninstall removes its data; unrelated Run entries remain. |
+| Idle | Observe Task Manager for several minutes with automation off, then with a schedule enabled. | Near-zero idle CPU; no inactive input-polling timers. Record memory use. |
 
-`dotnet test tests/Blackveil.Core.Tests` prüft die exakte Tastenzustandslogik des Hooks: alle linken/rechten Modifikatoren, Aktivierung mit gehaltenem Q, Wiederholungen, unvollständige Kombinationen und Freigabereihenfolgen.
+Also test Shift + K, a function key without modifiers, F12, Win combinations, Escape, Tab, OEM/media keys and Shift alone. Selection and saving must be possible even where Windows does not allow the combination to operate. Click the recording button to cancel capture; Escape is a valid candidate.
 
-`dotnet run --project tests/Blackveil.Windows.Tests` registriert einen echten globalen Hotkey mit `MOD_NOREPEAT`, prüft Kollision und Auslösung über `SendInput`, installiert den produktiven Low-Level-Hook und verlangt dessen Entsperrnachricht bei gleichzeitig unterdrücktem `WM_HOTKEY`. Anschliessend wird der Hook entfernt und die normale Hotkey-Auslösung erneut geprüft. Nachgeschaltete Beobachter-Hooks müssen während des Schutzes keine Tastatur-, Klick- oder Radereignisse erhalten. Ein schwarzes Testfenster muss `Close()` abweisen und kontrolliert geschlossen werden können. Drei anschliessende vollständige Tray-App-Zyklen prüfen Aktivierung, Monitorfenster, Escape-Unterdrückung, Q-Zustandsbereinigung und erneute Aktivierung.
+## Presentation workflow
 
-Diese Tests belegen keine physische Touch-/Stiftverarbeitung, Bildschirmabdeckung, Mixed-DPI-Hotplug oder Standby. Diese Punkte bleiben auf echter Hardware zu prüfen. Auch ein erfolgreicher Windows-CI-Lauf ersetzt diese Tests nicht.
+Connect a projector and laptop, cue and pause a video, activate blackout, speak, reveal, start playback separately, then return to black after the clip. Both displays must be covered together. Ordinary input must be suppressed during blackout. Confirm that Blackveil does not pause playback, mute audio, change brightness or power down the projector. Check that the README describes the same behavior.
 
-Ab 2.0.1 zusätzlich Shift+K, F-Taste ohne Modifikatoren, F12, Win-Kombination, Escape, Tab, OEM-/Medientaste und Shift allein testen. Bei Systemkombinationen ohne Garantie auf Funktion: Auswahl und Speicherung müssen möglich bleiben. Im Konfliktfall App neu starten und die Einstellungen zur Korrektur verwenden.
+## English interface and migration from 2.1.1
 
-## Updates ab 2.1
+On both English and German Windows, install 2.1.2 over a configured German 2.1.1 copy. Check shortcut preservation, startup state, update switches, schedules and installation scope. The existing JSON files must not need migration or be reset.
 
-Automatische Suche und automatische Installation unabhängig umschalten, Zeiten speichern, App neu starten und Persistenz prüfen. Automatik aus: keine Netzwerksuche, manueller Button bleibt funktionsfähig. Suche beim Start mit Installationsautomatik aus: neues Release zeigt eine Ja/Nein-Frage; Nein lässt die bisherige App laufen. Automatik ein: stille Aktualisierung, Neustart und Änderungsfenster. Zeitpläne für Suche und Installation separat testen, insbesondere verschiedene Uhrzeiten, Standby, Sommerzeit und App zur Fälligkeit ausgeschaltet. Während des Schwarzbilds darf kein Installer starten; nach Verlassen wird der Termin nachgeholt. Netzwerkfehler, GitHub-Rate-Limit, unvollständigen Download und falschen SHA256 prüfen. Portable App in nicht beschreibbarem Ordner muss weiterlaufen und einen Fehlerstatus zeigen. Einstellungen und Autostart vor/nach Update vergleichen. Änderungsfenster schliessen, neu starten: es erscheint erst bei neuer Version wieder.
+Verify English text in the tray menu and tooltip; Settings navigation and key labels; capture, save, cancel and warning states; About and version; every update schedule, prompt and status; error messages; and What's new, including entries for skipped versions. Check left/right modifier labels. Regional date/time formatting, time zone and keyboard layout must remain unchanged. Windows-owned UAC prompts may follow the Windows language.
 
-`./scripts/Test-Update.ps1` nutzt ein freies CI-Benutzerprofil und die veröffentlichte 2.0.1 als Fixture: echte portable und installierte Aktualisierung zur aktuellen Version, Helferprozess, stilles Setup, Neustart, Änderungsfenster und Erhalt von Einstellungen/Autostart. Eine falsche Prüfsumme muss die EXE unverändert lassen und die bisherige App wieder starten. Der Updater wird in 2.1 eingeführt; der erste Wechsel von 2.0.1 wird dabei vom Test-Helfer eingeleitet, nicht von einem in 2.0.1 bereits vorhandenen Updater.
+Run Setup without command-line scope overrides: the scope chooser, welcome, license, tasks, progress, finish and uninstall pages must be English, including artwork. Upgrade an installation whose previous installer language was German. Review text wrapping at 100%, 150% and 200% DPI, small screen heights, keyboard navigation and Windows contrast settings.
 
-## Installationsumfang und Design ab 2.1.1
+## Update behavior
 
-Setup interaktiv starten: beide Installationsarten müssen auswählbar sein, der gewählte Umfang muss im Wizard sichtbar bleiben. Benutzerinstallation als Standardkonto ohne UAC; Systeminstallation als Standardkonto mit normaler UAC-Zustimmung bzw. fremden Administrator-Zugangsdaten testen. Anschliessend die App als normalen Benutzer starten. Autostart und Einstellungen müssen zum angemeldeten Benutzer gehören, nicht zum bei UAC eingegebenen Administratorkonto. Systemweites Update: UAC zulassen/abbrechen; kein erhöhter Tray-Prozess darf zurückbleiben. Benutzerinstallation darf bei einem Update nicht systemweit werden. Zwei Windows-Konten und mehrere aktive Sitzungen separat prüfen. System-Deinstallation erhält persönliche Daten anderer Profile.
+Toggle automatic checks and installation independently, save times and restart. With automatic checks off, the manual button must work. With checks on and auto-install off, a new release must produce a Yes/No prompt; No keeps the old app running. With automatic installation on, check the silent update, restart and cumulative What's new window.
 
-Oberflächen bei 100 %, 150 % und 200 % DPI, kleiner Bildschirmhöhe, Tastaturbedienung und Windows-Kontrastmodus prüfen. Seitenleiste, helle Karten, Tastenaufnahme, Update-Schalter, Statusmeldungen und Info müssen lesbar und scrollbar bleiben. Screenshots aus echten Windows-Tests werden als `ui-screenshots`-Artefakt bereitgestellt. CI testet Systeminstallation und den Update-Pfad in einer bereits administrativen Sitzung; das ersetzt keinen manuellen Test echter UAC- und Mehrbenutzer-Situationen.
+Test each check/install schedule independently, including different daily times, standby, daylight saving and the app closed at the due time. A missed daily time with the app closed moves to the next scheduled occurrence. While blackout is active, no prompt or installer may interrupt it; work deferred because of blackout is retried afterward. Test network errors, GitHub rate limiting, truncated downloads and invalid SHA256. An unwritable portable folder must leave the app running with an error status. Preferences and startup must survive successful updates. Closing What's new and restarting must not show it again until a later version or update result warrants it. A failed version must not enter an automatic installation loop; manual retry is allowed.
+
+## Scope, UAC and multiple users
+
+Test personal installation as a standard account without elevation. Test system-wide installation as a standard account with normal consent and with another administrator's credentials. Launch the tray app afterward as the original normal user. Settings and startup must belong to that account, not the administrator used for elevation.
+
+Allow and cancel UAC during a system-wide update; no elevated tray process may remain afterward. Personal updates must not become machine-wide. Test two Windows accounts and multiple active sessions. System uninstall must preserve profile data and must not edit other users' profiles. Quit/uninstall before changing scope, so two installations are not left alongside each other.
+
+## Automated evidence and its limits
+
+`dotnet test tests/Blackveil.Core.Tests` exercises production key-state logic, left/right modifiers, activation with Q held, repeats, incomplete chords, release order, update schedules, release versions and cumulative notes.
+
+`dotnet run --project tests/Blackveil.Windows.Tests` tests real `RegisterHotKey`, collision, `MOD_NOREPEAT` and `SendInput`, then requires the production low-level hook to post unlock while suppressing `WM_HOTKEY`. Observer hooks verify downstream keyboard, click and wheel suppression. It also checks unhooking, protected overlay close, three full tray-app cycles, shortcut recording/persistence/restart, settings, download verification and English UI culture with regional formatting preserved. Actual forms are captured as the `ui-screenshots` workflow artifact.
+
+`./scripts/Test-SetupUi.ps1` opens and captures the scope chooser and welcome page without installing. `./scripts/Test-Installer.ps1` installs, starts and uninstalls the packaged app in a clean test profile. `./scripts/Test-Update.ps1` uses the published German 2.1.1 release to exercise real portable, personal and system-wide updates, restart, the English What's new window, settings/startup preservation and bad-checksum recovery. It uses the current helper to initiate fixture updates; this checks the installation/restart path independently of online update discovery.
+
+CI machine-scope checks run in an already administrative session. They do **not** replace standard-user UAC, alternate-admin-credential or multi-user checks. CI also does **not** establish physical touchscreen/pen behavior, projected image coverage, mixed-DPI hardware hotplug or standby reliability. These require real hardware and remain explicit manual checks.

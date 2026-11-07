@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="480" viewBox="0 0 1200 480" role="img" aria-labelledby="title desc">
+  <title id="title">Blackveil — Your reveal. Your timing.</title>
+  <desc id="desc">A black projector screen beside a presenter. Ctrl + Shift + Q hides every connected display until the right moment in your presentation.</desc>
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#0a1621"/><stop offset="1" stop-color="#153e48"/></linearGradient>
+    <linearGradient id="wall" x2="0" y2="1"><stop stop-color="#233945"/><stop offset="1" stop-color="#15232e"/></linearGradient>
+    <pattern id="grid" width="64" height="64" patternUnits="userSpaceOnUse"><path d="M64 0H0V64" fill="none" stroke="#8ae5d5" stroke-opacity=".055"/></pattern>
+  </defs>
+  <rect width="1200" height="480" rx="24" fill="url(#bg)"/>
+  <rect width="1200" height="480" rx="24" fill="url(#grid)"/>
+  <g font-family="Segoe UI, Inter, Arial, sans-serif">
+    <circle cx="83" cy="74" r="25" fill="#1e3a46"/>
+    <path d="M72 65l11 22 12-22" stroke="#5ceac5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <text x="124" y="82" fill="#f3fafb" font-size="23" font-weight="700" letter-spacing="2">BLACKVEIL</text>
+    <text x="58" y="186" fill="#f3fafb" font-size="64" font-weight="700">Your reveal.</text>
+    <text x="58" y="258" fill="#5ceac5" font-size="64" font-weight="700">Your timing.</text>
+    <text x="60" y="307" fill="#b8ccd4" font-size="22">Keep your video out of sight</text>
+    <text x="60" y="338" fill="#b8ccd4" font-size="22">until the right moment.</text>
+    <g fill="#1c3542" stroke="#496775">
+      <rect x="60" y="377" width="89" height="44" rx="10"/>
+      <rect x="161" y="377" width="101" height="44" rx="10"/>
+      <rect x="274" y="377" width="58" height="44" rx="10"/>
+    </g>
+    <g fill="#f3fafb" text-anchor="middle" font-size="19" font-weight="600">
+      <text x="104" y="405">Ctrl</text><text x="211" y="405">Shift</text><text x="303" y="405">Q</text>
+    </g>
+    <text x="352" y="405" fill="#5ceac5" font-size="18">Black. Reveal. Repeat.</text>
+    <rect x="678" y="68" width="464" height="354" rx="19" fill="url(#wall)" stroke="#496775"/>
+    <path d="M704 90v257m25-257v257m25-257v257m25-257v257m25-257v257m25-257v257m25-257v257m25-257v257m25-257v257m25-257v257m25-257v257m25-257v257m25-257v257m25-257v257m25-257v257m25-257v257m25-257v257" stroke="#aec7cc" stroke-opacity=".08" stroke-width="2"/>
+    <path d="M697 351h426" stroke="#ac956b" stroke-width="3"/>
+    <path d="M930 69v45" stroke="#70838d" stroke-width="3"/>
+    <rect x="775" y="111" width="321" height="8" rx="2" fill="#7a9099"/>
+    <rect x="783" y="124" width="306" height="188" rx="6" fill="#0b151e" stroke="#68828e" stroke-width="2"/>
+    <rect x="790" y="131" width="292" height="174" fill="#000"/>
+    <circle cx="739" cy="254" r="12" fill="#dbaf87"/>
+    <path d="M726 250a13 13 0 0 1 26 0" fill="#382e30"/>
+    <path d="M729 272h20l11 46h-42z" fill="#547e93"/>
+    <path d="M731 316l-6 33m17-33 7 33" stroke="#152631" stroke-width="10"/>
+    <path d="M750 279l14 13 14-12" stroke="#547e93" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <circle cx="778" cy="280" r="4" fill="#dbaf87"/>
+    <g fill="#0d1c27"><circle cx="804" cy="382" r="12"/><rect x="789" y="394" width="30" height="27" rx="9"/><circle cx="860" cy="382" r="12"/><rect x="845" y="394" width="30" height="27" rx="9"/><circle cx="916" cy="382" r="12"/><rect x="901" y="394" width="30" height="27" rx="9"/><circle cx="972" cy="382" r="12"/><rect x="957" y="394" width="30" height="27" rx="9"/><circle cx="1028" cy="382" r="12"/><rect x="1013" y="394" width="30" height="27" rx="9"/></g>
+    <text x="910" y="449" fill="#b8ccd4" text-anchor="middle" font-size="16">Windows 11 · Free &amp; open source</text>
+  </g>
+</svg>

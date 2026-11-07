@@ -3,38 +3,38 @@ namespace Blackveil;
 internal sealed class UpdateSettingsPanel : UserControl
 {
     private readonly UpdateCoordinator coordinator;
-    private readonly CheckBox search = new() { Text = "Automatisch nach Updates suchen", AutoSize = true };
-    private readonly CheckBox install = new() { Text = "Updates automatisch und ohne Rückfrage installieren", AutoSize = true };
+    private readonly CheckBox search = new() { Text = "Automatically check for updates", AutoSize = true };
+    private readonly CheckBox install = new() { Text = "Install updates automatically without asking", AutoSize = true };
     private readonly ComboBox checkWhen = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 320 };
     private readonly ComboBox installWhen = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 320 };
     private readonly DateTimePicker checkTime = TimePicker(), installTime = TimePicker();
     private readonly Label status = new() { AutoSize = true, MaximumSize = new Size(490, 0) };
-    private readonly Button manual = new() { Text = "Jetzt nach Updates suchen", AutoSize = true };
-    private readonly Button save = new() { Text = "Update-Einstellungen speichern", AutoSize = true };
+    private readonly Button manual = new() { Text = "Check for updates now", AutoSize = true };
+    private readonly Button save = new() { Text = "Save update settings", AutoSize = true };
     internal UpdateSettingsPanel(UpdateCoordinator coordinator)
     {
         this.coordinator = coordinator; Dock = DockStyle.Fill;
-        if (UpdateInstaller.IsMachineInstalled(Environment.ProcessPath!)) install.Text = "Updates automatisch installieren (Windows-Bestätigung nötig)";
+        if (UpdateInstaller.IsMachineInstalled(Environment.ProcessPath!)) install.Text = "Install updates automatically (Windows approval required)";
         var p = coordinator.Preferences;
         search.Checked = p.AutoCheck; install.Checked = p.AutoInstall;
-        checkWhen.Items.AddRange(["Beim Start", "Alle 6 Stunden", "Täglich zur Uhrzeit", "Alle 7 Tage"]);
-        installWhen.Items.AddRange(["Sobald ein Update gefunden wird", "Beim nächsten Start", "Täglich zur Uhrzeit"]);
+        checkWhen.Items.AddRange(["At startup", "Every 6 hours", "Daily at a set time", "Every 7 days"]);
+        installWhen.Items.AddRange(["As soon as an update is found", "At next startup", "Daily at a set time"]);
         checkWhen.SelectedIndex = (int)p.CheckWhen; installWhen.SelectedIndex = (int)p.InstallWhen;
         checkTime.Value = DateTime.Today.AddMinutes(p.CheckMinute); installTime.Value = DateTime.Today.AddMinutes(p.InstallMinute);
         var layout = AppTheme.Stack();
-        layout.Controls.Add(AppTheme.Title("Immer auf dem neuesten Stand"));
-        layout.Controls.Add(AppTheme.Hint("Du entscheidest, wann Blackveil nach Updates sucht und sie installiert."));
-        var searchCard = AppTheme.Card("Updates finden", "Automatische Suche und manuelle Suche bleiben unabhängig voneinander.");
+        layout.Controls.Add(AppTheme.Title("Stay up to date"));
+        layout.Controls.Add(AppTheme.Hint("Choose when Blackveil checks for updates and installs them."));
+        var searchCard = AppTheme.Card("Find updates", "Check manually at any time, even with automatic checks turned off.");
         searchCard.Controls.Add(search);
         var searchTime = new FlowLayoutPanel { AutoSize = true, WrapContents = true, MaximumSize = new Size(530,0) };
         searchTime.Controls.Add(checkWhen); searchTime.Controls.Add(checkTime); searchCard.Controls.Add(searchTime); layout.Controls.Add(searchCard);
-        var installCard = AppTheme.Card("Updates installieren", "Ohne Installationsautomatik fragt Blackveil vor dem Update. Zeitpläne gelten, solange die App läuft.");
+        var installCard = AppTheme.Card("Install updates", "With automatic installation off, Blackveil asks before updating. Schedules run while the app is open.");
         installCard.Controls.Add(install);
         var installTimeRow = new FlowLayoutPanel { AutoSize = true, WrapContents = true, MaximumSize = new Size(530,0) };
         installTimeRow.Controls.Add(installWhen); installTimeRow.Controls.Add(installTime); installCard.Controls.Add(installTimeRow);
         installCard.Controls.Add(AppTheme.Hint(UpdateInstaller.IsMachineInstalled(Environment.ProcessPath!)
-            ? "Für alle Benutzer installiert: Windows fragt bei Updates nach Administratorrechten. Diese Bestätigung kann nicht übersprungen werden."
-            : "Updates werden im Hintergrund installiert. Während des Schwarzbilds wird die Installation verschoben.",530));
+            ? "Installed for all users: Windows asks for administrator approval during updates. This prompt cannot be skipped."
+            : "Updates install in the background. Installation is deferred while blackout is active.",530));
         layout.Controls.Add(installCard);
         var actions = new FlowLayoutPanel { AutoSize = true, WrapContents = true, MaximumSize = new Size(580,0) };
         actions.Controls.Add(save); actions.Controls.Add(manual); layout.Controls.Add(actions);
@@ -49,7 +49,7 @@ internal sealed class UpdateSettingsPanel : UserControl
                 coordinator.SavePreferences(new UpdatePreferences { AutoCheck = search.Checked, AutoInstall = install.Checked,
                     CheckWhen = (CheckSchedule)checkWhen.SelectedIndex, InstallWhen = (InstallSchedule)installWhen.SelectedIndex,
                     CheckMinute = (int)checkTime.Value.TimeOfDay.TotalMinutes, InstallMinute = (int)installTime.Value.TimeOfDay.TotalMinutes });
-                status.Text = "Update-Einstellungen gespeichert. " + coordinator.Status;
+                status.Text = "Update settings saved. " + coordinator.Status;
             }
             catch (Exception error) { status.Text = error.Message; }
         };

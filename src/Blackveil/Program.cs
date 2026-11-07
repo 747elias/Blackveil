@@ -7,6 +7,7 @@ internal static class Program
     [STAThread]
     private static void Main(string[] args)
     {
+        AppLanguage.Initialize();
         if (args is ["--apply-update", var plan]) { Environment.ExitCode = UpdateInstaller.Run(plan); return; }
         using var mutex = new Mutex(true, @"Local\Blackveil.Singleton", out bool first);
         if (!first) return;
@@ -38,7 +39,7 @@ internal static class Program
         }
         Context?.Stop();
         Log.Write("Unhandled failure", error);
-        MessageBox.Show($"Blackveil wurde wegen eines Fehlers beendet. Der Schwarzbild-Modus wurde aufgehoben.\n\n{error?.Message}\n\nProtokoll: %LOCALAPPDATA%\\Blackveil\\logs", "Blackveil", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        MessageBox.Show($"Blackveil stopped after an error. Blackout has been turned off.\n\n{error?.Message}\n\nLogs: %LOCALAPPDATA%\\Blackveil\\logs", "Blackveil", MessageBoxButtons.OK, MessageBoxIcon.Error);
         Application.Exit();
     }
 }

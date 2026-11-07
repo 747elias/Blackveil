@@ -1,11 +1,11 @@
 ﻿#ifndef AppVersion
-  #error AppVersion muss aus Directory.Build.props übergeben werden.
+  #error AppVersion must be supplied from Directory.Build.props.
 #endif
 #ifndef SourceDir
-  #error SourceDir fehlt.
+  #error SourceDir is required.
 #endif
 #ifndef OutputDir
-  #error OutputDir fehlt.
+  #error OutputDir is required.
 #endif
 
 [Setup]
@@ -23,6 +23,8 @@ DisableFinishedPage=no
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 UsePreviousPrivileges=no
+UsePreviousLanguage=no
+ShowLanguageDialog=no
 MinVersion=10.0.22000
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
@@ -45,10 +47,10 @@ AppMutex=Blackveil.Singleton
 LicenseFile=..\LICENSE
 
 [Languages]
-Name: "german"; MessagesFile: "compiler:Languages\German.isl"
+Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "autostart"; Description: "Blackveil mit Windows starten"; Flags: unchecked; Check: IsPerUserInstall
+Name: "autostart"; Description: "Start Blackveil with Windows"; Flags: unchecked; Check: IsPerUserInstall
 
 [Files]
 Source: "{#SourceDir}\Blackveil.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -61,7 +63,7 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "Blackveil"; Tasks: not autostart; Flags: deletevalue uninsdeletevalue; Check: IsPerUserInstall
 
 [Run]
-Filename: "{app}\Blackveil.exe"; Description: "Blackveil im Infobereich starten"; Flags: nowait postinstall skipifsilent runasoriginaluser
+Filename: "{app}\Blackveil.exe"; Description: "Launch Blackveil in the system tray"; Flags: nowait postinstall skipifsilent runasoriginaluser
 
 [UninstallDelete]
 Type: files; Name: "{localappdata}\Blackveil\settings.json"; Check: IsPerUserInstall
@@ -82,9 +84,9 @@ var
   ScopeText: String;
 begin
   if IsAdminInstallMode then
-    ScopeText := 'Für alle Benutzer'
+    ScopeText := 'All users'
   else
-    ScopeText := 'Nur für dich';
+    ScopeText := 'Just you';
   WizardForm.Caption := 'Blackveil {#AppVersion} · ' + ScopeText;
 end;
 
@@ -100,9 +102,9 @@ begin
   WizardForm.FinishedHeadingLabel.Font.Size := 22;
   WizardForm.PageNameLabel.Font.Color := $687700;
   WizardForm.PageDescriptionLabel.Font.Color := $7E705E;
-  WizardForm.WelcomeLabel1.Caption := 'Dein Bildschirm.' + #13#10 + 'Dein Moment.';
-  WizardForm.WelcomeLabel2.Caption := 'Blackveil blendet deine Bildschirme auf Tastendruck aus und hält gewöhnliche Eingaben zurück.' + #13#10 + #13#10 +
-    'Wähle die Installation für dein Konto oder für alle Benutzer. Deine Einstellungen bleiben immer persönlich.';
+  WizardForm.WelcomeLabel1.Caption := 'Your reveal.' + #13#10 + 'Your timing.';
+  WizardForm.WelcomeLabel2.Caption := 'Keep your video out of sight until the right moment. One shortcut covers every display in black and holds ordinary input.' + #13#10 + #13#10 +
+    'Install just for you or for all users. Your preferences always stay personal.';
   ScopeHint := TNewStaticText.Create(WizardForm);
   ScopeHint.Parent := WizardForm.SelectTasksPage;
   ScopeHint.AutoSize := False;
@@ -110,9 +112,9 @@ begin
   ScopeHint.SetBounds(ScaleX(0), ScaleY(125), WizardForm.SelectTasksPage.ClientWidth, ScaleY(85));
   ScopeHint.Font.Color := $7E705E;
   if IsAdminInstallMode then
-    ScopeHint.Caption := 'Systemweite Installation: Den persönlichen Autostart kannst du nach der Installation im Blackveil-Tray-Menü aktivieren. Updates brauchen eine Windows-Bestätigung.'
+    ScopeHint.Caption := 'System-wide installation: Enable personal startup later in the Blackveil tray menu. Updates require Windows administrator approval.'
   else
-    ScopeHint.Caption := 'Alles bleibt in deinem Konto. Blackveil startet auf Wunsch nur im Hintergrund - ohne Schwarzbild.';
+    ScopeHint.Caption := 'Everything stays in your account. Optional Windows startup runs in the background without turning blackout on.';
   if IsAdminInstallMode then Exit;
   if (Pos('/TASKS=', Uppercase(GetCmdTail)) > 0) or (Pos('/MERGETASKS=', Uppercase(GetCmdTail)) > 0) then Exit;
   if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run',

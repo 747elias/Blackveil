@@ -7,6 +7,8 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>blackveil.ico</ApplicationIcon>
     <AssemblyName>Blackveil</AssemblyName>
+    <NeutralLanguage>en</NeutralLanguage>
+    <Description>Control the reveal. A temporary visual and input shield for Windows presentations.</Description>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <PublishTrimmed>false</PublishTrimmed>

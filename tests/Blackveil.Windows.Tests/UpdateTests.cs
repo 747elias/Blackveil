@@ -52,29 +52,29 @@ internal static class UpdateTests
             using var panel = new UpdateSettingsPanel(updates);
             window.Controls.Add(panel); window.Show();
             var controls = Descendants(panel).ToArray();
-            controls.OfType<CheckBox>().Single(c => c.Text.StartsWith("Automatisch nach")).Checked = false;
-            controls.OfType<CheckBox>().Single(c => c.Text.StartsWith("Updates automatisch")).Checked = true;
+            controls.OfType<CheckBox>().Single(c => c.Text.StartsWith("Automatically check")).Checked = false;
+            controls.OfType<CheckBox>().Single(c => c.Text.StartsWith("Install updates automatically")).Checked = true;
             var combos = controls.OfType<ComboBox>().ToArray();
             combos[0].SelectedIndex = (int)CheckSchedule.Daily;
             combos[1].SelectedIndex = (int)InstallSchedule.NextStartup;
-            controls.OfType<Button>().Single(b => b.Text == "Update-Einstellungen speichern").PerformClick();
+            controls.OfType<Button>().Single(b => b.Text == "Save update settings").PerformClick();
             var saved = store.Load<UpdatePreferences>("update-settings.json");
             Require(!saved.AutoCheck && saved.AutoInstall && saved.CheckWhen == CheckSchedule.Daily && saved.InstallWhen == InstallSchedule.NextStartup, "Independent toggles and schedules persist through GUI");
-            controls.OfType<Button>().Single(b => b.Text == "Jetzt nach Updates suchen").PerformClick();
+            controls.OfType<Button>().Single(b => b.Text == "Check for updates now").PerformClick();
             var clock = System.Diagnostics.Stopwatch.StartNew();
-            while ((updates.Busy || !updates.Status.Contains("aktuell")) && clock.ElapsedMilliseconds < 5000)
+            while ((updates.Busy || !updates.Status.Contains("up to date")) && clock.ElapsedMilliseconds < 5000)
             { Application.DoEvents(); Thread.Sleep(5); }
-            Require(updates.Status.Contains("aktuell"), "Manual search works with automatic search disabled");
+            Require(updates.Status.Contains("up to date"), "Manual search works with automatic search disabled");
             window.Close();
             using (var settings = new SettingsWindow(Blackveil.Core.Shortcut.Default, _ => { }, null, updates))
             {
                 settings.Show(); Application.DoEvents();
                 Capture(settings,"settings-shortcut");
                 settings.SelectPage("Updates"); Application.DoEvents(); Capture(settings,"settings-updates");
-                settings.SelectPage("Info"); Application.DoEvents(); Capture(settings,"settings-info");
+                settings.SelectPage("About"); Application.DoEvents(); Capture(settings,"settings-info");
                 settings.Close();
             }
-            using (var changes = new ChangesWindow(UpdateCoordinator.CurrentVersion.ToString(), "Version " + UpdateCoordinator.CurrentVersion + "\r\n\r\n- Neues Design mit klarer Navigation\r\n- Installation für dich oder alle Benutzer\r\n- Deine Einstellungen bleiben persönlich"))
+            using (var changes = new ChangesWindow(UpdateCoordinator.CurrentVersion.ToString(), "Version " + UpdateCoordinator.CurrentVersion + "\r\n\r\n- A clear design with easy navigation\r\n- Install for yourself or all users\r\n- Your settings stay personal"))
             { changes.Show(); Application.DoEvents(); Capture(changes,"changes"); changes.Close(); }
             Console.WriteLine("PASS: update metadata, origin restrictions, valid download, checksum rejection, settings GUI toggles/schedules and manual search.");
         }

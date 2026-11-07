@@ -7,7 +7,7 @@ internal sealed class SettingsWindow : Form
 {
     private readonly TextBox shortcutText = new() { ReadOnly = true, Dock = DockStyle.Fill, TabStop = false };
     private readonly Label status = new() { AutoSize = true, MaximumSize = new Size(450, 0) };
-    private readonly Button record = new() { Text = "Shortcut aufnehmen", AutoSize = true };
+    private readonly Button record = new() { Text = "Record shortcut", AutoSize = true };
     private readonly Action<Shortcut> save;
     private Shortcut candidate;
     private bool recording, refreshing;
@@ -22,7 +22,7 @@ internal sealed class SettingsWindow : Form
         this.save = save;
         this.warning = warning;
         candidate = current;
-        Text = "Blackveil – Einstellungen";
+        Text = "Blackveil – Settings";
         FormBorderStyle = FormBorderStyle.Sizable;
         MaximizeBox = true; MinimizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
@@ -32,14 +32,14 @@ internal sealed class SettingsWindow : Form
         AppTheme.Form(this);
         KeyPreview = true;
         var layout = AppTheme.Stack();
-        layout.Controls.Add(AppTheme.Title("Dein Tastenkürzel"));
-        layout.Controls.Add(AppTheme.Hint("Ein Griff. Alle Bildschirme schwarz. Noch einmal drücken, um zurückzukehren."));
-        var shortcutCard = AppTheme.Card("Schwarzbild ein / aus", "Dein aktuelles Tastenkürzel. Änderungen werden erst mit Speichern übernommen.");
+        layout.Controls.Add(AppTheme.Title("Your shortcut"));
+        layout.Controls.Add(AppTheme.Hint("One shortcut. Every display black. Press it again to reveal your screen."));
+        var shortcutCard = AppTheme.Card("Toggle blackout", "Your current shortcut. Changes take effect when you select Save.");
         shortcutText.Dock = DockStyle.None; shortcutText.Width = 530; shortcutText.Height = 46;
         shortcutText.Text = current.ToString(); shortcutCard.Controls.Add(shortcutText);
         record.Click += (_, _) => { if (recording) { recording = false; RefreshCandidate(); } else BeginRecording(); };
         shortcutCard.Controls.Add(record); layout.Controls.Add(shortcutCard);
-        var manualCard = AppTheme.Card("Frei zusammenstellen", "Alternativ eine Taste auswählen und die gewünschten Modifikatortasten ergänzen.");
+        var manualCard = AppTheme.Card("Build your own", "Or choose a key below and add the modifiers you want.");
         var picker = new FlowLayoutPanel { AutoSize = true, MaximumSize = new Size(530,0), WrapContents = true, Margin = new Padding(0,0,0,8) };
         foreach (int code in Enumerable.Range(8, 247)) keyPicker.Items.Add(new KeyChoice(code));
         picker.Controls.Add(keyPicker); picker.Controls.Add(ctrl); picker.Controls.Add(alt); picker.Controls.Add(shift); picker.Controls.Add(win);
@@ -48,23 +48,23 @@ internal sealed class SettingsWindow : Form
         keyPicker.SelectedIndexChanged += (_, _) => SelectManually();
         foreach (var box in new[] { ctrl, alt, shift, win }) box.CheckedChanged += (_, _) => SelectManually();
         RefreshPicker();
-        status.Text = warning?.Invoke() ?? "Hinweis: Windows kann reservierte Kombinationen abfangen. Deine Auswahl wird trotzdem gespeichert.";
+        status.Text = warning?.Invoke() ?? "Note: Windows may intercept reserved combinations. You can still save your choice.";
         status.ForeColor = AppTheme.Muted; status.MaximumSize = new Size(580,0); status.Margin = new Padding(0,0,0,16);
         layout.Controls.Add(status);
-        var reset = new Button { Text = "Standard: Ctrl + Shift + Q", AutoSize = true };
+        var reset = new Button { Text = "Default: Ctrl + Shift + Q", AutoSize = true };
         reset.Click += (_, _) => { recording = false; candidate = Shortcut.Default; RefreshCandidate(); };
         manualCard.Controls.Add(reset);
         var buttons = new FlowLayoutPanel { AutoSize = true, Width = 580, FlowDirection = FlowDirection.RightToLeft };
-        var cancel = new Button { Text = "Abbrechen", AutoSize = true, DialogResult = DialogResult.Cancel };
-        var apply = new Button { Text = "Speichern", AutoSize = true };
+        var cancel = new Button { Text = "Cancel", AutoSize = true, DialogResult = DialogResult.Cancel };
+        var apply = new Button { Text = "Save", AutoSize = true };
         apply.Click += (_, _) =>
         {
-            if (recording) { status.Text = "Zuerst eine Tastenkombination aufnehmen oder mit Escape abbrechen."; return; }
+            if (recording) { status.Text = "Finish recording a shortcut, or click the recording button to cancel."; return; }
             try
             {
                 save(candidate);
                 string? hint = warning?.Invoke();
-                if (hint is not null) { status.Text = "Gespeichert. Hinweis: " + hint; cancel.Text = "Schliessen"; return; }
+                if (hint is not null) { status.Text = "Saved. Note: " + hint; cancel.Text = "Close"; return; }
                 DialogResult = DialogResult.OK; Close();
             }
             catch (Exception error) { status.Text = error.Message; }
@@ -95,8 +95,8 @@ internal sealed class SettingsWindow : Form
     }
     internal void BeginRecording()
     {
-        recording = true; pendingModifier = null; record.Text = "Tastenkombination drücken …";
-        status.Text = "Jetzt den gewünschten Shortcut drücken. Für einzelne Modifikatortasten: drücken und loslassen. Erneut auf Aufnahme klicken zum Abbrechen.";
+        recording = true; pendingModifier = null; record.Text = "Press your shortcut …";
+        status.Text = "Press the shortcut you want. For a modifier on its own, press and release it. Click the recording button again to cancel.";
         record.Focus();
     }
     internal bool CaptureShortcut(Keys keyData)
@@ -114,8 +114,8 @@ internal sealed class SettingsWindow : Form
     private void RefreshCandidate()
     {
         RefreshPicker();
-        shortcutText.Text = candidate.ToString(); record.Text = "Shortcut aufnehmen";
-        status.Text = "Mit Speichern übernehmen. Hinweis: Reservierte oder belegte Shortcuts werden ebenfalls gespeichert, können aber nicht funktionieren.";
+        shortcutText.Text = candidate.ToString(); record.Text = "Record shortcut";
+        status.Text = "Select Save to apply. Reserved or unavailable shortcuts can be saved, but may not work.";
     }
     private sealed record KeyChoice(int Code)
     {

@@ -20,7 +20,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
         run: |
-          if ($env:GITHUB_REF -notmatch '^refs/tags/v\d+\.\d+\.\d+$') { throw 'Release muss auf einem Versionstag laufen.' }
+          if ($env:GITHUB_REF -notmatch '^refs/tags/v\d+\.\d+\.\d+$') { throw 'Release must run on a version tag.' }
       - name: Build and test
         shell: pwsh
         run: |
@@ -65,14 +65,14 @@ jobs:
           gh release view $tag *> $null
           if ($LASTEXITCODE -ne 0) {
             gh release create $tag --verify-tag --title "Blackveil $($tag.TrimStart('v'))" --notes-file artifacts/release-notes.md --draft
-            if ($LASTEXITCODE) { throw 'Release konnte nicht erstellt werden.' }
+            if ($LASTEXITCODE) { throw 'Could not create the release.' }
           }
           gh release upload $tag artifacts/release/* --clobber
-          if ($LASTEXITCODE) { throw 'Upload fehlgeschlagen.' }
+          if ($LASTEXITCODE) { throw 'Upload failed.' }
           $release = gh release view $tag --json assets | ConvertFrom-Json
           $version = $tag.TrimStart('v')
           foreach ($name in @('Blackveil.exe', "Blackveil-Setup-$version.exe", "Blackveil-$version-win-x64.zip", 'SHA256SUMS.txt')) {
-            if ($name -notin $release.assets.name) { throw "Asset fehlt: $name" }
+            if ($name -notin $release.assets.name) { throw "Missing asset: $name" }
           }
           gh release edit $tag --draft=false --latest
-          if ($LASTEXITCODE) { throw 'Veröffentlichung fehlgeschlagen.' }
+          if ($LASTEXITCODE) { throw 'Publication failed.' }

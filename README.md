@@ -1,109 +1,163 @@
 # Blackveil
 
-Vorübergehender Sicht- und Eingabeschutz für **Windows 11 x64**, geschrieben in C# mit **.NET 10 LTS**. Kein Hauptfenster: Blackveil läuft ausschliesslich im Infobereich. Die Tray-App benötigt keine Administratorrechte und keine separat installierte .NET-Runtime. Die optionale systemweite Installation und deren Updates benötigen Administratorrechte.
+![Blackveil — Your reveal. Your timing.](docs/assets/blackveil-banner.svg)
 
-**[Neueste Version herunterladen](https://github.com/747elias/Blackveil/releases/latest)** · [Repository](https://github.com/747elias/Blackveil) · [Workflows](https://github.com/747elias/Blackveil/actions) · [Testplan](docs/TESTPLAN.md)
+[![Build and test](https://github.com/747elias/Blackveil/actions/workflows/build.yml/badge.svg)](https://github.com/747elias/Blackveil/actions/workflows/build.yml)
+[![Latest release](https://img.shields.io/github/v/release/747elias/Blackveil?color=007768&label=download)](https://github.com/747elias/Blackveil/releases/latest)
+[![MIT license](https://img.shields.io/badge/license-MIT-182733)](LICENSE)
 
-## Installation und Bedienung
+**Keep your video out of sight until the right moment.**
 
-1. `Blackveil-Setup-2.1.1.exe` aus dem Release starten. Im Setup zwischen **«Nur für mich»** (`%LOCALAPPDATA%\Programs\Blackveil`, ohne Administratorrechte) und **«Für alle Benutzer»** (`%ProgramFiles%\Blackveil`, mit Windows-UAC-Bestätigung) wählen. Bei einer Benutzerinstallation lässt sich «Blackveil mit Windows starten» direkt auswählen. Bei einer Systeminstallation richtet jeder Benutzer seinen Autostart später selbst im Tray-Menü ein.
-2. Alternativ `Blackveil.exe` in einem dauerhaften Ordner ablegen oder die portable ZIP entpacken und die EXE starten. Für portablen Autostart darf dieser Pfad anschliessend nicht verändert werden.
-3. **Ctrl + Shift + Q** aktiviert schwarze, randlose Fenster auf allen Monitoren. Den Hotkey erneut drücken und **die Haupttaste loslassen**, um den Modus zu beenden. Gehaltenes Q schaltet nicht mehrfach um.
-4. **Linksklick auf das Tray-Symbol** öffnet «Einstellungen». Mit «Shortcut aufnehmen» die gewünschte Kombination drücken und danach «Speichern» wählen. Auch Shift-Kombinationen, einzelne Tasten, Windows-Tasten, F12 und Sondertasten sind auswählbar. Alternativ die Taste in der Liste wählen und Ctrl/Alt/Shift/Win ankreuzen. Einzelne Modifikatortasten werden beim Loslassen aufgenommen; der Aufnahme-Button bricht die Aufnahme ab. «Standard» stellt Ctrl + Shift + Q wieder her. Während der Einstellungen ist das Schwarzbild pausiert.
-5. Im Kontextmenü des Tray-Symbols: «Schwarzbild aktivieren», «Mit Windows starten», «Einstellungen», «Info» mit Version und «Beenden». Während des Schwarzbilds ist das Menü durch den Eingabeschutz nicht erreichbar.
+Blackveil covers **every connected display in black** with one global shortcut. Use it before and after a video in your presentation: your audience sees the content when you are ready, while the focus stays on your words in between. Ordinary keyboard and mouse input is intercepted while blackout is active.
 
-Ein belegter oder von Windows abgewiesener Hotkey bleibt gespeichert. Blackveil startet weiterhin im Tray; ein Hinweis in den Einstellungen erklärt die Einschränkung. Solange Windows die Registrierung ablehnt, ist die Schwarzbild-Aktivierung deaktiviert. Eine zweite Instanz beendet sich sofort. Ein Autostart zeigt nur das Tray-Symbol und aktiviert kein Schwarzbild.
+**`Ctrl` + `Shift` + `Q` → black. Press it again → reveal.**
 
-Die Dateien sind **nicht code-signiert**. Windows SmartScreen kann «Der Computer wurde durch Windows geschützt» anzeigen. Vor dem Ausführen Herkunft und SHA256-Prüfsummen überprüfen. Auf ARM64 ist diese Ausgabe höchstens über Windows-x64-Emulation nutzbar; es gibt kein natives ARM64-Release.
+### [Download Blackveil for Windows 11](https://github.com/747elias/Blackveil/releases/latest)
+
+[Portable EXE](https://github.com/747elias/Blackveil/releases/latest/download/Blackveil.exe) · [All releases](https://github.com/747elias/Blackveil/releases) · [Changelog](CHANGELOG.md) · [Manual test plan](docs/TESTPLAN.md)
+
+## Built for the moment in your presentation
+
+1. **Prepare.** Connect your projector, cue your video and pause it before your talk.
+2. **Hide.** Press **Ctrl + Shift + Q**. Your projector and your other displays go black.
+3. **Reveal.** When you reach the right point, press the shortcut again, then start your video.
+4. **Continue.** When the clip ends, return to black and keep presenting.
+
+Blackveil hides all connected displays, including your laptop. You cannot operate the desktop behind blackout. **You control playback separately:** Blackveil does not pause videos, mute audio, dim screens or power down a projector.
+
+> Blackveil is a temporary visual and input shield, **not a Windows lock or a security boundary**. Protected Windows functions remain available. Use Windows locking for access protection.
+
+## Small app. One clear job.
+
+- **A shortcut that works across apps.** The default is Ctrl + Shift + Q, with key repeat prevention. Record your own combination or choose its keys in Settings.
+- **Every display covered.** Borderless, topmost black windows, with support for different resolutions, per-monitor DPI and display changes.
+- **Fewer accidental inputs.** Ordinary keyboard and mouse input is intercepted; overlays discard pointer, touch, pen and gesture messages.
+- **Lives in the system tray.** No main window. Left-click the icon for Settings; right-click for blackout, startup, About and Quit.
+- **Updates on your terms.** Check manually or schedule checks and installation independently. See what changed after updating.
+- **Install your way.** Just for you, for all users, or portable. The tray app runs without administrator privileges. No separate .NET runtime is required.
+
+## Install and get started
+
+| Download | What it does |
+| --- | --- |
+| `Blackveil-Setup-<version>.exe` | Installs Blackveil, adds shortcuts and an uninstaller, and lets you choose the installation scope. |
+| `Blackveil.exe` | Runs directly from a folder you choose. No installation wizard. |
+| `Blackveil-<version>-win-x64.zip` | Contains the portable EXE, this README and the MIT license. |
+| `SHA256SUMS.txt` | SHA256 checksums for the three downloads above. |
+
+The current release targets **Windows 11 x64**. ARM64 devices may use Windows x64 emulation; there is no native ARM64 build.
+
+In Setup, choose **Just you** (`%LOCALAPPDATA%\Programs\Blackveil`, no administrator privileges) or **All users** (`%ProgramFiles%\Blackveil`, normal Windows administrator approval). For a personal installation, **Start Blackveil with Windows** is available in Setup. For a system-wide installation, each user enables their own startup preference from the tray menu.
+
+After starting Blackveil, find its icon in the system tray, including the hidden-icons area if necessary. Startup only launches the tray app; it never turns blackout on automatically. Only one instance runs per interactive Windows session.
+
+**Unsigned download:** Blackveil is not code-signed. Windows SmartScreen may show a warning. Check the source and compare the downloaded file with the release checksum before running it:
 
 ```powershell
 Get-FileHash .\Blackveil.exe -Algorithm SHA256
 Get-Content .\SHA256SUMS.txt
 ```
 
-Der gewählte Shortcut wird unter `%LOCALAPPDATA%\Blackveil\settings.json` gespeichert und beim nächsten Start geladen. Er gilt sowohl zum Aktivieren als auch zum Beenden. Auch reservierte oder belegte Kombinationen dürfen gespeichert werden. Ein Hinweis warnt, dass Windows sie möglicherweise abfängt. Ohne erfolgreiche Registrierung wird kein Schwarzbild aktiviert. Ein erfolgreiches RegisterHotKey ist ebenfalls keine Garantie für geschützte Systemkombinationen. Schliessen ohne Speichern verwirft die noch nicht gespeicherte Auswahl. Während der Aufnahme werden keine Tastensequenzen protokolliert. Ohne gültige Einstellungsdatei gilt wieder der Standard-Shortcut.
+### Choose your shortcut
 
-## Updates ab Version 2.1
+Left-click the tray icon and select **Record shortcut**. Press your combination, then select **Save**. Alternatively, choose a key and tick Ctrl, Alt, Shift or Win. **Default** restores Ctrl + Shift + Q; closing without saving discards the draft.
 
-Unter **Einstellungen → Updates** lassen sich automatische Suche und automatische Installation getrennt ein-/ausschalten. Änderungen werden mit «Update-Einstellungen speichern» übernommen; diese Einstellungen sind unabhängig vom Shortcut-Speichern.
+Single keys, modifier keys on their own, Shift combinations, Windows keys, F12 and special keys can be selected. For a modifier alone, press and release it. Click the recording button again to cancel recording; Escape itself can be a shortcut. Blackout is paused while Settings is open.
 
-- **Suche:** beim Start, alle sechs Stunden, täglich zu einer lokalen Uhrzeit oder alle sieben Tage.
-- **Installation:** sobald gefunden, beim nächsten Start oder täglich zu einer eigenen lokalen Uhrzeit.
-- **Ohne automatische Installation:** Blackveil fragt vor der Installation. «Nein» verschiebt das Update. Für ausschliesslich manuelle Nutzung automatische Suche ausschalten.
-- **Jetzt nach Updates suchen:** funktioniert auch bei ausgeschalteter Automatik. Bei eingeschalteter automatischer Installation installiert dieser manuelle Auftrag sofort ohne Rückfrage; sonst erscheint die Installationsfrage.
+Windows may reject or intercept reserved or already assigned shortcuts. Blackveil still saves your choice and explains the problem. If registration fails, blackout stays disabled and Settings remains accessible. Even successful registration cannot guarantee a protected system combination will work. The same saved shortcut activates and exits blackout; **release its main key when exiting** to prevent repeat activation.
 
-Standard: Suche beim Start eingeschaltet, automatische Installation ausgeschaltet. Zeitpläne laufen nur, solange Blackveil läuft; die Windows-Autostart-Option ist dafür unabhängig einschaltbar. Verpasste tägliche Termine bei ausgeschalteter App werden am nächsten laufenden Termin ausgeführt. Während des Schwarzbilds wird eine fällige Suche/Installation verschoben. Suche und Download laufen im Hintergrund. Wird währenddessen ein Schwarzbild aktiviert, verschiebt Blackveil Rückfragen und die Installation bis nach dem Schwarzbild.
+Settings are in English on every supported Windows language. Regional date/time formats and keyboard layouts remain unchanged. Windows-owned prompts, such as UAC, follow Windows settings.
 
-Die App bezieht ausschliesslich stabile Releases aus `747elias/Blackveil`, ohne Token oder Kontoanmeldung. Sie prüft die Downloadadresse und die SHA256-Prüfsumme aus dem Release, bevor sie heruntergeladene Dateien ausführt. Die Prüfsumme schützt vor Übertragungsfehlern; sie ersetzt keine unabhängige Code-Signatur und schützt nicht vor einem kompromittierten GitHub-Repository.
+## Updates
 
-Installierte Ausgaben verwenden den Installer mit `/VERYSILENT` und behalten ihren Umfang über `/CURRENTUSER` bzw. `/ALLUSERS` bei. Bei Systeminstallationen wird nur der Installer über die normale Windows-UAC-Abfrage erhöht; der Update-Helfer und die neu gestartete Tray-App bleiben unter dem ursprünglichen Benutzer. Eine UAC-Abfrage kann nicht still übersprungen werden, auch bei eingeschalteter Installationsautomatik. Wird sie abgebrochen, startet Blackveil wieder und erlaubt einen späteren manuellen Versuch. Portable Ausgaben ersetzen ihre EXE im bisherigen Ordner. Ein separater Helfer wartet auf das Beenden der App, prüft die Datei erneut, aktualisiert und startet Blackveil ohne Schwarzbild neu. Für portable und Benutzerinstallationen muss der Zielordner für den Benutzer beschreibbar sein. Bei einer Systeminstallation übernimmt ausschliesslich der erhöhte Installer das Schreiben nach Program Files. Bei portablen und Benutzerinstallationen wird der bisherige EXE-Stand vor dem Austausch gesichert und bei behandelbaren Fehlern wiederhergestellt; eine vollständig transaktionale Rücknahme sämtlicher Windows-Installer-Metadaten wird nicht garantiert. Nach einem Installationsfehler wird dieselbe Version nicht automatisch erneut installiert; ein manueller Versuch bleibt möglich.
+Under **Settings → Updates**, automatic checks and automatic installation have separate switches. Select **Save update settings** to apply them; shortcut settings are saved separately.
 
-Nach einem Update erscheint **«Neu in Blackveil …»** mit den Änderungen seit der zuletzt angezeigten Version. Beim ersten Start von 2.1 wird dieses Fenster ebenfalls angezeigt. Updates werden unter `%LOCALAPPDATA%\Blackveil\updates` zwischengespeichert; alte Cache-Ordner werden nach sieben Tagen beim nächsten Start entfernt. Update-Einstellungen, Zeitplanstatus und zuletzt angezeigte Version liegen daneben in separaten JSON-Dateien. Die Deinstallation entfernt diese Dateien.
+| Setting | Choices |
+| --- | --- |
+| Check for updates | At startup, every six hours, daily at a local time, or every seven days |
+| Install automatically | As soon as an update is found, at next startup, or daily at a local time |
+| Manual check | **Check for updates now**, even with automatic checks disabled |
 
-**Versionen bis 2.0.1 haben noch keinen Updater. Daher 2.1 einmal manuell installieren; spätere Releases können dann automatisch installiert werden.** Den Monitor-Standby oder die Monitorhelligkeit verändert Blackveil weiterhin nicht.
+By default, Blackveil checks at startup and **asks before installing**. Enable automatic installation for updates without the app's confirmation question. A manual check then installs an available update immediately, regardless of the automatic installation schedule. System-wide installation still requires Windows administrator approval.
 
-## Deinstallation und Autostart
+Schedules run only while Blackveil is running; startup can be enabled independently. Missed daily times while the app is closed move to the next scheduled occurrence. Checks, prompts and installation are deferred during blackout. Downloads run in the background, and the app restarts without enabling blackout. **What's new** shows changes since the last version you viewed.
 
-Zuerst den Schwarzbild-Modus mit dem Hotkey verlassen und Blackveil über das Tray-Menü beenden. Danach unter Windows «Einstellungen → Apps → Installierte Apps → Blackveil» deinstallieren. Der Installer fordert beim laufenden Programm zum Beenden auf. Alle eigenen Run-Einträge und Logs sowie die Einstellungsdatei werden entfernt. Andere Run-Werte bleiben erhalten.
+Updates come from stable releases in this repository, without a token or GitHub account. The updater validates asset addresses and SHA256 checksums before execution; the helper verifies the payload again. Checksums detect corruption, but do not replace code signing or protect against a compromised release source.
 
-Menü und Installer verwenden denselben Wert `Blackveil` unter `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`. Der Inhalt ist `"<vollständiger EXE-Pfad>" --autostart`. Bei Benutzerinstallationen liest der Installer den tatsächlichen Wert für seine Vorauswahl; eine explizite `/TASKS=autostart`-Auswahl wird respektiert. Bei einer portablen Ausgabe vor dem Löschen der EXE «Mit Windows starten» ausschalten; bei Bedarf den genannten Registry-Wert manuell entfernen.
+Installed copies keep their scope with `/CURRENTUSER` or `/ALLUSERS`. Only the system-wide installer is elevated through normal UAC; the helper and restarted tray app remain under the original account. Portable updates replace the EXE in its existing folder. Portable and personal installation folders must be writable by the current user. The previous EXE is backed up for recoverable failures; a full transaction covering every installer registry entry is not guaranteed. A failed version is not automatically installed again in a loop; manual retry remains available. System installations may need repair using Setup if an interrupted update cannot complete.
 
-Bei einem Wechsel zwischen Benutzer- und Systeminstallation zuerst Blackveil beenden und die bisherige Installation deinstallieren, damit nicht zwei Ausgaben nebeneinander verbleiben. Automatische Updates wechseln den Installationsumfang nicht. Für unbeaufsichtigte Bereitstellung kann das Setup explizit mit `/CURRENTUSER` oder `/ALLUSERS` gestartet werden. Eine stille Systeminstallation legt keine persönlichen Autostart-Einträge für ein möglicherweise anderes Administrator-Konto an.
+Versions up to **2.0.1** do not include an updater. Install a newer version manually once to enable future updates.
 
-## Lokal bauen und testen
+## Startup, settings and uninstalling
 
-Voraussetzungen: Windows 11, aktuelles **.NET 10 SDK**, für den Installer **Inno Setup 6**. Visual Studio ist optional. SDK-Auswahl: `global.json`. Version: ausschliesslich `Directory.Build.props`.
+The tray menu and personal installer share the `Blackveil` value in:
+
+```text
+HKCU\Software\Microsoft\Windows\CurrentVersion\Run
+"<full path to Blackveil.exe>" --autostart
+```
+
+The installer reads the actual startup state; explicit `/TASKS=autostart` is respected. Keep a portable EXE at a stable path if startup is enabled. Disable its startup entry before deleting or moving it.
+
+Personal data is stored in `%LOCALAPPDATA%\Blackveil`: `settings.json` for the shortcut; separate JSON files for update preferences, schedule state and results; `updates` for cached packages; and `logs` for operational errors. No keystrokes, screenshots or private content are logged. Logs older than 14 days and update cache folders older than seven days are removed during later app activity.
+
+To uninstall, exit blackout with your shortcut, choose **Quit** in the tray menu, then use **Windows Settings → Apps → Installed apps → Blackveil**. A personal uninstall removes its settings, cache and logs. A system uninstall preserves user-profile data. The uninstaller removes the current account's startup entry only when it points at that installation; it does not alter other users' profiles or unrelated Run entries.
+
+**Changing installation scope:** quit and uninstall the old copy before installing in the other scope. Automatic updates never change scope. For deployment, use `/CURRENTUSER` or `/ALLUSERS` explicitly. A silent system install does not create a personal startup entry for an administrator account used during elevation.
+
+## Build locally
+
+Use the **.NET 10 LTS SDK** and **Inno Setup 6** on Windows 11. Visual Studio is optional. SDK selection is in `global.json`; the application version is defined centrally in `Directory.Build.props`.
 
 ```powershell
 git clone https://github.com/747elias/Blackveil.git
 cd Blackveil
 dotnet build Blackveil.sln -c Release -warnaserror
 dotnet test tests/Blackveil.Core.Tests -c Release --no-build
-# Verwendet echte user32-Hooks und simulierte Tasten: nur in einer freien Testsitzung!
+
+# Real user32 hooks and injected input: use an unlocked, dedicated test session.
 dotnet run --project tests/Blackveil.Windows.Tests -c Release --no-build
+
+# Creates the portable EXE, ZIP, installer and SHA256SUMS.txt.
 ./scripts/Package.ps1
 ```
 
-Die Windows-Integrationstests benötigen einen entsperrten interaktiven Desktop und dürfen nicht parallel mit Blackveil laufen. Sie scheitern ausdrücklich, wenn der native Hotkey oder der Eingabepfad nicht funktioniert. Es wird kein Erfolg durch Überspringen dieser Tests vorgetäuscht.
+Native Windows tests must run on an unlocked interactive desktop, without another Blackveil instance. They fail when native registration or the input path fails; they are not silently skipped. Test scripts that install or update the app require a clean test profile and machine.
 
-`Package.ps1` publiziert `win-x64` als self-contained Single-File-EXE, erstellt den Installer mit ISCC, die portable ZIP sowie `SHA256SUMS.txt` in `artifacts/release`. Die ZIP enthält zusätzlich README und MIT-Lizenz. Die native .NET-Laufzeit kann beim ersten Start Dateien in einen temporären .NET-Bundle-Ordner extrahieren. Keine Build-Ergebnisse werden eingecheckt.
+Packaging produces a self-contained, single-file `win-x64` EXE in `artifacts/release`. The .NET bundle may extract native runtime files into a temporary bundle directory at first launch. Build outputs are excluded from Git.
 
-Unter Linux ist Cross-Build möglich (`dotnet build` und `dotnet publish ... -r win-x64 --self-contained true`); WinForms und die nativen Integrationstests können dort nicht ausgeführt werden. Ein Installer wird auf Windows gebaut.
+Linux can cross-build and publish the Windows target, and run the core tests. WinForms, native integration tests and the Inno Setup installer require Windows. See the [architecture](docs/ARCHITECTURE.md) and [manual test plan](docs/TESTPLAN.md) for implementation details and hardware coverage.
 
-## GitHub Actions und neue Releases
+## GitHub Actions and releases
 
-`build.yml` baut bei jedem Push und Pull Request auf `windows-latest`, behandelt Warnungen als Fehler und führt Logik- sowie native Integrationstests aus. `release.yml` wiederholt diese Prüfung bei `v*`-Tags, installiert bei Bedarf Inno Setup, paketiert, prüft die Installation/Deinstallation und veröffentlicht erst nach Prüfung aller vier Assets. Ein manueller Workflow-Start auf einem Branch prüft die Paketierung, ohne ein Release zu veröffentlichen. Release Notes stammen aus dem passenden Abschnitt der `CHANGELOG.md`. Bei fehlgeschlagenem Upload bleibt ein neu erstelltes Release zunächst ein Entwurf.
+**Build and test** runs on pushes and pull requests using `windows-latest`. It treats warnings as errors, runs core and native Windows tests, and captures UI screenshots. **Release** repeats validation, packages the app, exercises installation, updates and uninstalling, then publishes the four downloads. A manual release-workflow run on a branch validates packaging without publishing. Notes come from the matching `CHANGELOG.md` section; an incomplete upload remains a draft.
 
-Für eine neue Version `Version` in `Directory.Build.props` erhöhen und einen passenden `CHANGELOG.md`-Abschnitt ergänzen. Anschliessend zum Beispiel:
+To release a new version, update `Version` in `Directory.Build.props`, add its changelog section, then push a matching tag. For example, for a future `2.1.3` release:
 
 ```powershell
 git add Directory.Build.props CHANGELOG.md
-git commit -m "Release version 2.0.1"
+git commit -m "Release version 2.1.3"
 git push origin main
-git tag -a v2.0.1 -m "Blackveil 2.0.1"
-git push origin v2.0.1
+git tag -a v2.1.3 -m "Blackveil 2.1.3"
+git push origin v2.1.3
 gh run list --workflow release.yml
-gh release view v2.0.1 --json url,assets
+gh release view v2.1.3 --json url,assets
 ```
 
-Tag und zentrale Version müssen übereinstimmen. Die Workflows nutzen nur das kurzlebige `GITHUB_TOKEN` mit den nötigen Repository-Rechten. Lokal `gh auth login` verwenden; keine Zugangsdaten in Dateien oder Commits speichern. Einen fehlgeschlagenen Lauf über `gh run view <RUN-ID> --log-failed` untersuchen und nach einer Korrektur eine neue Version veröffentlichen. Ein unverändert fehlgeschlagener Infrastruktur-Lauf kann mit `gh run rerun <RUN-ID> --failed` erneut gestartet werden.
+The tag must match the central version. Actions use the short-lived `GITHUB_TOKEN`; authenticate local GitHub CLI work with `gh auth login`. Never commit credentials. Inspect failures with `gh run view <RUN-ID> --log-failed`. Fix source errors before a new release; an unchanged infrastructure failure can be retried with `gh run rerun <RUN-ID> --failed`.
 
-## Technische Grenzen
+## Technical limits
 
-Blackveil ist **keine Windows-Sperre und keine Sicherheitsgrenze**. Für Schutz vor fremdem Zugriff `Win + L` verwenden, nachdem Blackveil verlassen wurde. **Ctrl + Alt + Entf**, UAC, Sicherheitsdesktop, Windows-Sitzungssperre und andere geschützte Systemfunktionen werden weder umgangen noch blockiert. Ein Wechsel des Desktops, der Sitzung oder des Energiezustands beendet das Schwarzbild vorsorglich; nach dem Aufwachen kann es wieder aktiviert werden.
+- **Protected Windows functions stay available.** Ctrl + Alt + Delete, UAC, the secure desktop, session locking and other protected functions are neither bypassed nor blocked. Desktop, session and power changes turn blackout off as a precaution; it can be activated again afterward.
+- **Input interception has limits.** Low-level hooks suppress ordinary keyboard and mouse input on the current input desktop. Overlays also discard pointer, touch and gesture messages. OEM gestures, hardware keys, drivers, Raw Input consumers, protected surfaces and other topmost windows cannot be fully shielded by this app.
+- **Elevated apps are subject to UIPI.** Interception and synthetic key/button releases may be restricted across integrity levels. Blackveil runs `asInvoker`, without UIAccess, drivers, `BlockInput`, security changes or persistent keyboard, mouse or touch changes. Release the shortcut modifiers after exiting blackout.
+- **Cleanup is defensive, not a system guarantee.** Normal exit, partial activation and handled errors remove hooks, close overlays and restore the cursor. A hook-thread failure deactivates blackout; an active-only watchdog terminates a stuck UI after about ten seconds. After a hard process termination, Windows releases process-owned resources; .NET handlers cannot be guaranteed to run. Windows may silently remove a slow hook, and no supported handle query reliably detects that condition. A system or driver hang is beyond a user app's control.
+- **Low idle activity.** There are no input-polling timers while inactive. Enabled update schedules use a timer for the next due event; with automation off, that timer is stopped.
 
-Low-Level-Hooks unterdrücken gewöhnliche Tastatur- und Mauseingaben im eigenen Eingabedesktop. Pointer-, Touch- und Gestennachrichten werden zusätzlich auf den schwarzen Fenstern verworfen. Windows-/OEM-Gesten, Hardwaretasten, Treiber, Raw-Input-Verbraucher, geschützte Oberflächen und andere Topmost-Fenster liegen ausserhalb einer garantierten vollständigen Abschirmung. Windows kann einen zu langsamen Hook still entfernen; der normale registrierte Hotkey bleibt dann als zusätzlicher Ausweg verfügbar. Die Hooks laufen deshalb in einem separaten, kurzen Nachrichtenpfad ohne Dateizugriffe.
+The [manual test plan](docs/TESTPLAN.md) separates automated evidence from real hardware checks, especially touch, pen, mixed-DPI displays, standby, standard-user UAC and multiple Windows accounts.
 
-Gegenüber **erhöht gestarteten Anwendungen gelten UIPI/Integritätsgrenzen**. Eingabeunterdrückung und die synthetischen Key-up-Ereignisse zur Bereinigung zuvor gehaltener Tasten können dort eingeschränkt sein. Blackveil läuft `asInvoker`, ohne UIAccess, Treiber oder Änderungen an Sicherheitsmechanismen. Es verwendet kein `BlockInput` und verändert keine dauerhaften Tastatur-, Maus- oder Touch-Einstellungen. Nach dem Verlassen die Hotkey-Modifikatoren loslassen.
+## Why WinForms?
 
-Beim normalen Deaktivieren, bei teilweiser Aktivierung und behandelten Fehlern werden Hooks entfernt, Fenster geschlossen und der ausgeglichene Cursor-Hide-Aufruf rückgängig gemacht. Bei einer unerwarteten Hook-Thread-Störung wird der Modus beendet; bei dauerhaft blockierter Oberfläche beendet ein nur im aktiven Modus laufender Wächter den Prozess nach ungefähr zehn Sekunden. Bei hartem Prozessabbruch können keine .NET-Handler garantiert laufen: Windows entfernt die prozesseigenen Hooks, Fenster und Cursor-Zustände. Ein System- oder Treiberstillstand kann von einer Benutzer-App nicht behoben werden.
+WinForms suits a small tray utility: `NotifyIcon`, ordinary HWNDs and direct Win32 message handling, with little idle work. WPF would add rendering and layout capabilities that black overlays do not need, while still requiring Win32 interop. WinUI 3 would add Windows App SDK and deployment complexity for a tray-only app. Per-Monitor-V2 is enabled before the first window is created.
 
-Im inaktiven Modus existieren keine Eingabe-Polling-Timer. Ein eingeschalteter Update-Zeitplan verwendet einen Timer für den nächsten konkreten Termin; bei ausgeschalteter Automatik bleibt dieser gestoppt. Fehlerlogs liegen unter `%LOCALAPPDATA%\Blackveil\logs`; Dateien älter als 14 Tage werden beim nächsten Logeintrag entfernt. Es werden keine Tasteneingaben, Screenshots oder privaten Inhalte protokolliert.
-
-## Aufbau und UI-Wahl
-
-`src/Blackveil` enthält WinForms, Win32-Interop und die Tray-App, `src/Blackveil.Core` die plattformunabhängige Tastenzustandslogik. `tests/` enthält Unit- und native Integrationstests, `installer/` das Inno-Skript, `scripts/` die gemeinsame Paketierung und `docs/` Architektur und Testplan.
-
-**WinForms** passt zu NotifyIcon, klassischen HWNDs und Low-Level-Nachrichten bei geringer Leerlauflast. **WPF** bietet Layout und Rendering, die schwarze Fenster nicht benötigen, und würde ebenfalls Win32-Interop voraussetzen. **WinUI 3** bietet moderne Controls, bringt für diese reine Tray-App jedoch zusätzliche Windows-App-SDK-/Deployment-Komplexität. Per-Monitor-V2 wird über die .NET-WinForms-Konfiguration und `Application.SetHighDpiMode` vor dem ersten HWND aktiviert.
-
-Lizenz: [MIT](LICENSE).
+Built with C# and .NET 10 LTS. [MIT licensed](LICENSE).

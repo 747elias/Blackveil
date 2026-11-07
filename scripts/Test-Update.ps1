@@ -49,9 +49,12 @@ function Exercise-Update([string]$Target, [string]$Payload, [bool]$IsInstalled, 
     if ((!$BadHash -and $worker.ExitCode -ne 0) -or ($BadHash -and $worker.ExitCode -eq 0)) { throw "Unexpected helper result: $($worker.ExitCode)" }
     Wait-Until { [BlackveilUpdateProbe]::FindWindow([IntPtr]::Zero, 'Blackveil.Controller') -ne [IntPtr]::Zero } 'updated app restart'
     if ((Get-Item $Target).VersionInfo.FileVersion -ne "$version.0") { throw 'Target version mismatch.' }
-    Wait-Until { [BlackveilUpdateProbe]::FindWindow([IntPtr]::Zero, "Neu in Blackveil $version") -ne [IntPtr]::Zero } 'post-update changes window'
-    if ((Get-Content "$dataRoot/settings.json" -Raw | ConvertFrom-Json).Key -ne 75) { throw 'Shortcut settings were lost.' }
-    if ((Get-Content "$dataRoot/update-settings.json" -Raw | ConvertFrom-Json).AutoCheck) { throw 'Update settings were lost.' }
+    Wait-Until { [BlackveilUpdateProbe]::FindWindow([IntPtr]::Zero, "What's new in Blackveil $version") -ne [IntPtr]::Zero } 'post-update changes window'
+    $shortcut = Get-Content "$dataRoot/settings.json" -Raw | ConvertFrom-Json
+    if ($shortcut.Key -ne 75 -or $shortcut.Modifiers -ne 4) { throw 'Shortcut settings were lost.' }
+    $preferences = Get-Content "$dataRoot/update-settings.json" -Raw | ConvertFrom-Json
+    if ($preferences.AutoCheck -or $preferences.AutoInstall -or $preferences.CheckWhen -ne 0 -or
+        $preferences.InstallWhen -ne 0 -or $preferences.CheckMinute -ne 1080 -or $preferences.InstallMinute -ne 1200) { throw 'Update settings were lost.' }
     Stop-Blackveil
 }
 try {
@@ -62,15 +65,15 @@ try {
     New-Item $testRoot,$dataRoot -ItemType Directory -Force | Out-Null
     [xml]$props = Get-Content Directory.Build.props
     $version = [string]$props.Project.PropertyGroup.Version
-    $oldRelease = 'https://github.com/747elias/Blackveil/releases/download/v2.0.1'
+    $oldRelease = 'https://github.com/747elias/Blackveil/releases/download/v2.1.1'
     Invoke-WebRequest "$oldRelease/SHA256SUMS.txt" -OutFile "$testRoot/SHA256SUMS.txt"
-    foreach ($name in @('Blackveil.exe', 'Blackveil-Setup-2.0.1.exe')) {
+    foreach ($name in @('Blackveil.exe', 'Blackveil-Setup-2.1.1.exe')) {
         Invoke-WebRequest "$oldRelease/$name" -OutFile "$testRoot/$name"
         $line = Get-Content "$testRoot/SHA256SUMS.txt" | Where-Object { $_.EndsWith("  $name") }
         if (!$line -or (Get-FileHash "$testRoot/$name" -Algorithm SHA256).Hash -ne $line.Substring(0,64)) { throw 'Old fixture checksum failed.' }
     }
     @{ AutoCheck=$false; AutoInstall=$false; CheckWhen=0; InstallWhen=0; CheckMinute=1080; InstallMinute=1200 } | ConvertTo-Json | Set-Content "$dataRoot/update-settings.json"
-    @{ LastSeenVersion='2.0.1' } | ConvertTo-Json | Set-Content "$dataRoot/update-state.json"
+    @{ LastSeenVersion='2.1.1' } | ConvertTo-Json | Set-Content "$dataRoot/update-state.json"
     @{ Key=75; Modifiers=4 } | ConvertTo-Json | Set-Content "$dataRoot/settings.json"
     $portable = Join-Path $testRoot 'portable/Blackveil.exe'
     New-Item (Split-Path $portable) -ItemType Directory | Out-Null
@@ -80,7 +83,7 @@ try {
     Exercise-Update $portable (Resolve-Path artifacts/publish/Blackveil.exe).Path $false $true
     if ((Get-FileHash $portable -Algorithm SHA256).Hash -ne $before) { throw 'Checksum failure modified target.' }
     $installed = Join-Path $testRoot 'installed'
-    $setup = Start-Process "$testRoot/Blackveil-Setup-2.0.1.exe" -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/TASKS=autostart', "/DIR=`"$installed`"") -Wait -PassThru
+    $setup = Start-Process "$testRoot/Blackveil-Setup-2.1.1.exe" -ArgumentList @('/CURRENTUSER', '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/TASKS=autostart', "/DIR=`"$installed`"") -Wait -PassThru
     if ($setup.ExitCode -ne 0) { throw 'Old install fixture failed.' }
     dotnet run --project tests/Blackveil.Windows.Tests -c Release --no-build -- --assert-installed "$installed/Blackveil.exe"
     if ($LASTEXITCODE) { throw 'Installed-mode detection failed.' }
@@ -108,7 +111,7 @@ try {
     $runAfterMachineUpdate = (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name Blackveil).Blackveil
     if ($runAfterMachineUpdate -ne "`"$installed\Blackveil.exe`" --autostart") { throw 'Machine update changed personal autostart.' }
     Write-Host 'PASS: machine installation to Program Files, HKLM registration, machine update with elevation path, personal settings and autostart preservation.'
-    Write-Host 'PASS: real 2.0.1 -> current portable and installed upgrades, silent setup, restart, changes window, settings/autostart preservation, checksum failure recovery.'
+    Write-Host 'PASS: real 2.1.1 -> current portable and installed upgrades, silent setup, restart, changes window, settings/autostart preservation, checksum failure recovery.'
 } catch {
     Get-Content "$dataRoot/logs/*.log" -ErrorAction SilentlyContinue | Write-Host
     throw

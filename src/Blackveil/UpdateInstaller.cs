@@ -26,8 +26,8 @@ internal static class UpdateInstaller
     internal static void LaunchHelper(string directory, string package, string hash, bool installed, Version version)
     {
         string target = Environment.ProcessPath!;
-        if (!Path.GetFileName(target).Equals("Blackveil.exe", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Updates benötigen die veröffentlichte Blackveil.exe.");
-        if ((File.GetAttributes(target) & FileAttributes.ReadOnly) != 0) throw new IOException("Die Blackveil.exe ist schreibgeschützt.");
+        if (!Path.GetFileName(target).Equals("Blackveil.exe", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Updates require the published Blackveil.exe.");
+        if ((File.GetAttributes(target) & FileAttributes.ReadOnly) != 0) throw new IOException("Blackveil.exe is read-only.");
         // Verify write access before shutting down the working instance.
         bool machine = IsMachineInstalled(target);
         string probe = Path.Combine(Path.GetDirectoryName(target)!, Guid.NewGuid() + ".tmp");
@@ -40,7 +40,7 @@ internal static class UpdateInstaller
         File.WriteAllText(path, JsonSerializer.Serialize(plan));
         var start = new ProcessStartInfo(helper) { UseShellExecute = false, CreateNoWindow = true };
         start.ArgumentList.Add("--apply-update"); start.ArgumentList.Add(path);
-        _ = Process.Start(start) ?? throw new IOException("Update-Helfer konnte nicht gestartet werden.");
+        _ = Process.Start(start) ?? throw new IOException("The update helper could not be started.");
     }
     internal static int Run(string planFile)
     {
@@ -53,18 +53,18 @@ internal static class UpdateInstaller
             string root = Path.GetFullPath(Path.Combine(storage.Root, "updates")) + Path.DirectorySeparatorChar;
             string fullPlan = Path.GetFullPath(planFile);
             if (!fullPlan.StartsWith(root, StringComparison.OrdinalIgnoreCase) || !string.Equals(Path.GetDirectoryName(fullPlan), Path.GetDirectoryName(Environment.ProcessPath), StringComparison.OrdinalIgnoreCase))
-                throw new InvalidDataException("Ungültiger Update-Auftrag.");
-            plan = JsonSerializer.Deserialize<UpdatePlan>(File.ReadAllText(fullPlan)) ?? throw new InvalidDataException("Update-Auftrag fehlt.");
+                throw new InvalidDataException("Invalid update request.");
+            plan = JsonSerializer.Deserialize<UpdatePlan>(File.ReadAllText(fullPlan)) ?? throw new InvalidDataException("Missing update request.");
             if (!Path.IsPathFullyQualified(plan.Target) || !Path.GetFileName(plan.Target).Equals("Blackveil.exe", StringComparison.OrdinalIgnoreCase) ||
                 !string.Equals(Path.GetDirectoryName(Path.GetFullPath(plan.Package)), Path.GetDirectoryName(fullPlan), StringComparison.OrdinalIgnoreCase) || !Version.TryParse(plan.Version, out _))
-                throw new InvalidDataException("Ungültige Update-Pfade.");
+                throw new InvalidDataException("Invalid update paths.");
             plan = plan with { Target = Path.GetFullPath(plan.Target), Package = Path.GetFullPath(plan.Package) };
             try
             {
                 using var parent = Process.GetProcessById(plan.ParentId);
                 if (parent.StartTime.ToUniversalTime().Ticks != plan.ParentStartTicks ||
-                    !string.Equals(parent.MainModule?.FileName, plan.Target, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("Update-Elternprozess stimmt nicht überein.");
-                if (!parent.WaitForExit(60000)) throw new TimeoutException("Blackveil wurde nicht rechtzeitig beendet.");
+                    !string.Equals(parent.MainModule?.FileName, plan.Target, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("The update parent process does not match.");
+                if (!parent.WaitForExit(60000)) throw new TimeoutException("Blackveil did not exit in time.");
             }
             catch (ArgumentException) { /* Already exited before helper initialization. */ }
             parentExited = true;
@@ -79,10 +79,10 @@ internal static class UpdateInstaller
                 foreach (string argument in new[] { "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-", "/CLOSEAPPLICATIONS", "/NORESTARTAPPLICATIONS",
                     (machine ? "/ALLUSERS" : "/CURRENTUSER"), "/DIR=" + Path.GetDirectoryName(plan.Target), "/TASKS=" + (plan.Autostart ? "autostart" : ""),
                     "/LOG=" + Path.Combine(Path.GetDirectoryName(fullPlan)!, "installer.log") }) installer.ArgumentList.Add(argument);
-                using var process = Process.Start(installer) ?? throw new IOException("Installer konnte nicht gestartet werden.");
+                using var process = Process.Start(installer) ?? throw new IOException("The installer could not be started.");
                 // Wait until completion: never restore files while an installer is still writing.
                 process.WaitForExit();
-                if (process.ExitCode != 0) throw new IOException($"Installer meldet Fehler {process.ExitCode}.");
+                if (process.ExitCode != 0) throw new IOException($"The installer returned error {process.ExitCode}.");
             }
             else
             {
@@ -91,8 +91,8 @@ internal static class UpdateInstaller
                 File.Move(incoming, plan.Target, true);
             }
             var actual = FileVersionInfo.GetVersionInfo(plan.Target).FileVersion;
-            if (actual != plan.Version + ".0") throw new InvalidDataException("Installierte Version stimmt nicht mit dem Update überein.");
-            storage.Save("update-result.json", new UpdateResult(true, "Update auf " + plan.Version + " erfolgreich installiert.", plan.Version));
+            if (actual != plan.Version + ".0") throw new InvalidDataException("The installed version does not match the update.");
+            storage.Save("update-result.json", new UpdateResult(true, "Update to " + plan.Version + " installed successfully.", plan.Version));
             Restart(plan.Target);
             try { File.Delete(backup); } catch (IOException) { }
             return 0;
@@ -105,10 +105,10 @@ internal static class UpdateInstaller
                 try
                 {
                     if (!machine && backup is not null && File.Exists(backup)) File.Copy(backup, plan.Target, true);
-                    storage.Save("update-result.json", new UpdateResult(false, (machine ? "Systemweites Update nicht abgeschlossen. Bitte die Installation bei Bedarf mit dem Setup reparieren. " : "Update fehlgeschlagen; die vorherige EXE wurde beibehalten bzw. wiederhergestellt. ") + error.Message, plan.Version));
+                    storage.Save("update-result.json", new UpdateResult(false, (machine ? "The system-wide update did not finish. Use Setup to repair the installation if needed. " : "The update failed; the previous executable was kept or restored. ") + error.Message, plan.Version));
                     Restart(plan.Target);
                 }
-                catch (Exception recovery) { Log.Write("Update recovery failed", recovery); MessageBox.Show("Blackveil konnte nicht neu gestartet werden. Bitte die App manuell starten. " + error.Message, "Blackveil – Update"); }
+                catch (Exception recovery) { Log.Write("Update recovery failed", recovery); MessageBox.Show("Blackveil could not restart. Please start the app manually. " + error.Message, "Blackveil – Update"); }
             }
             return 1;
         }
@@ -117,6 +117,6 @@ internal static class UpdateInstaller
     {
         var start = new ProcessStartInfo(target) { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(target)! };
         start.ArgumentList.Add("--after-update");
-        _ = Process.Start(start) ?? throw new IOException("Neustart fehlgeschlagen.");
+        _ = Process.Start(start) ?? throw new IOException("Restart failed.");
     }
 }

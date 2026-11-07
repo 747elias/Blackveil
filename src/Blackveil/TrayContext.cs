@@ -41,11 +41,11 @@ internal sealed class TrayContext : ApplicationContext
     private bool hotkeyAvailable;
     private ToolStripItem? activationItem;
     internal bool CanActivate => hotkeyAvailable;
-    internal string? ShortcutWarning => hotkeyAvailable ? null : "Windows konnte den Shortcut nicht registrieren. Er bleibt gespeichert, funktioniert möglicherweise nicht. Schwarzbild bleibt bis zu einer erfolgreichen Registrierung deaktiviert.";
+    internal string? ShortcutWarning => hotkeyAvailable ? null : "Windows could not register this shortcut. It is saved, but may not work. Blackout stays disabled until a shortcut can be registered.";
     private void UpdateShortcutStatus()
     {
         if (activationItem is not null) activationItem.Enabled = hotkeyAvailable;
-        tray.Text = hotkeyAvailable ? $"Blackveil – {shortcut}" : "Blackveil – Shortcut nicht verfügbar; Einstellungen öffnen";
+        tray.Text = hotkeyAvailable ? $"Blackveil – {shortcut}" : "Blackveil – Shortcut unavailable; open Settings";
     }
     internal Shortcut CurrentShortcut => shortcut;
     internal TrayContext(SettingsStore? settings = null)
@@ -56,28 +56,28 @@ internal sealed class TrayContext : ApplicationContext
         hotkeyAvailable = Native.RegisterHotKey(messages.Handle, hotkeyId, 0x4000 | shortcut.EffectiveModifiers, (uint)shortcut.Key);
         icon = AppTheme.CreateIcon();
         menu = new ContextMenuStrip { ShowImageMargin = false, Font = new Font("Segoe UI",10), ForeColor = AppTheme.Ink, Renderer = new ToolStripProfessionalRenderer(new MenuColors()) };
-        activationItem = menu.Items.Add("Schwarzbild aktivieren", null, (_, _) => Activate());
-        var startup = new ToolStripMenuItem("Mit Windows starten") { CheckOnClick = false };
+        activationItem = menu.Items.Add("Activate blackout", null, (_, _) => Activate());
+        var startup = new ToolStripMenuItem("Start with Windows") { CheckOnClick = false };
         startup.Click += (_, _) =>
         {
             try { Startup.Enabled = !Startup.Enabled; startup.Checked = Startup.Enabled; }
-            catch (Exception error) { Report("Autostart konnte nicht geändert werden.", error); }
+            catch (Exception error) { Report("Could not change the startup setting.", error); }
         };
         menu.Items.Add(startup);
         menu.Opening += (_, _) =>
         {
             try { startup.Checked = Startup.Enabled; }
-            catch (Exception error) { Report("Autostart konnte nicht gelesen werden.", error); }
+            catch (Exception error) { Report("Could not read the startup setting.", error); }
         };
-        menu.Items.Add("Einstellungen …", null, (_, _) => ShowSettings());
-        menu.Items.Add("Info", null, (_, _) => ShowSettings("Info"));
-        menu.Items.Add("Beenden", null, (_, _) => ExitThread());
+        menu.Items.Add("Settings …", null, (_, _) => ShowSettings());
+        menu.Items.Add("About", null, (_, _) => ShowSettings("About"));
+        menu.Items.Add("Quit", null, (_, _) => ExitThread());
         tray = new NotifyIcon { Icon = icon, Text = $"Blackveil – {shortcut}", ContextMenuStrip = menu, Visible = true };
         UpdateShortcutStatus();
         tray.MouseClick += (_, e) => { if (e.Button == MouseButtons.Left) ShowSettings(); };
         desktopChanged = (_, _, _, _, _, _, _) => Native.PostMessage(messages.Handle, SafeStopMessage, 0, 0);
         desktopHook = Native.SetWinEventHook(0x20, 0x20, 0, desktopChanged, 0, 0, 0);
-        if (desktopHook == 0) { Stop(); throw new InvalidOperationException("Desktop-Wechsel können nicht überwacht werden."); }
+        if (desktopHook == 0) { Stop(); throw new InvalidOperationException("Desktop changes could not be monitored."); }
         SystemEvents.DisplaySettingsChanged += DisplayChanged;
         SystemEvents.PowerModeChanged += PowerChanged;
         SystemEvents.SessionSwitch += SessionChanged;
@@ -90,8 +90,8 @@ internal sealed class TrayContext : ApplicationContext
 
     internal void ApplyShortcut(Shortcut next)
     {
-        if (active) throw new InvalidOperationException("Shortcut kann nur bei ausgeschaltetem Schwarzbild geändert werden.");
-        if (!next.IsValid) throw new ArgumentException("Ungültiger Shortcut.");
+        if (active) throw new InvalidOperationException("Turn blackout off before changing the shortcut.");
+        if (!next.IsValid) throw new ArgumentException("Invalid shortcut.");
         if (next == shortcut) return;
         int nextId = hotkeyId == Native.HotkeyId ? Native.HotkeyId + 1 : Native.HotkeyId;
         bool registered = Native.RegisterHotKey(messages.Handle, nextId, next.EffectiveModifiers | 0x4000, (uint)next.Key);
@@ -146,7 +146,7 @@ internal sealed class TrayContext : ApplicationContext
                 { Log.Write("UI unresponsive; terminating to release Windows-owned resources"); Environment.Exit(5); }
             }, null, 2000, 2000);
         }
-        catch (Exception error) { Deactivate(); Report("Schwarzbild konnte nicht sicher aktiviert werden.", error); }
+        catch (Exception error) { Deactivate(); Report("Blackout could not be activated safely.", error); }
     }
 
     private void RebuildWindows()
@@ -165,7 +165,7 @@ internal sealed class TrayContext : ApplicationContext
                 window.Bounds = screen.Bounds;
                 window.BringToFront();
             }
-            if (next.Count == 0) throw new InvalidOperationException("Kein Monitor verfügbar.");
+            if (next.Count == 0) throw new InvalidOperationException("No display is available.");
         }
         catch { Deactivate(); throw; }
         finally { foreach (var window in old) window.CloseVeil(); }
@@ -246,7 +246,7 @@ internal sealed class TrayContext : ApplicationContext
                 if (m.Msg == 0x11) { context.Deactivate(); m.Result = 1; return; }
                 if (m.Msg == 0x16) { context.ExitThread(); return; }
             }
-            catch (Exception error) { context.Deactivate(); Report("Blackveil hat den Schwarzbild-Modus aus Sicherheitsgründen beendet.", error); }
+            catch (Exception error) { context.Deactivate(); Report("Blackveil turned blackout off after an error.", error); }
             base.WndProc(ref m);
         }
     }

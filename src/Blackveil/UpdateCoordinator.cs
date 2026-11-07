@@ -16,7 +16,7 @@ internal sealed class UpdateCoordinator : IDisposable
     private bool started, disposed;
     private DateTimeOffset? installDue;
     internal bool Busy { get; private set; }
-    internal string Status { get; private set; } = "Noch nicht nach Updates gesucht.";
+    internal string Status { get; private set; } = "No update check yet.";
     internal event Action? Changed;
     internal UpdatePreferences Preferences { get; private set; }
     internal UpdateCoordinator(Func<bool> canInteract, Action exitForUpdate, UpdateStorage? storage = null, ReleaseClient? client = null)
@@ -26,13 +26,13 @@ internal sealed class UpdateCoordinator : IDisposable
         Preferences = this.storage.Load<UpdatePreferences>("update-settings.json");
         if (!Preferences.IsValid) Preferences = new();
         state = this.storage.Load<UpdateState>("update-state.json");
-        if (state.LastCheckUtc is { } last) Status = "Letzte Suche: " + last.ToLocalTime().ToString("g");
+        if (state.LastCheckUtc is { } last) Status = "Last checked: " + last.ToLocalTime().ToString("g");
         timer.Tick += async (_, _) => { timer.Stop(); await CheckAsync(false, false, installDue is { } due && due <= DateTimeOffset.Now.AddSeconds(2)); };
     }
     internal void SavePreferences(UpdatePreferences preferences)
     {
-        if (Busy) throw new InvalidOperationException("Bitte zuerst die laufende Update-Suche abwarten.");
-        if (!preferences.IsValid) throw new ArgumentException("Ungültiger Update-Zeitplan.");
+        if (Busy) throw new InvalidOperationException("Wait for the current update check to finish.");
+        if (!preferences.IsValid) throw new ArgumentException("Invalid update schedule.");
         storage.Save("update-settings.json", preferences); Preferences = preferences;
         if (!preferences.AutoInstall) { state = state with { PendingVersion = null }; storage.Save("update-state.json", state); installDue = null; }
         Schedule(); Changed?.Invoke();
@@ -67,46 +67,46 @@ internal sealed class UpdateCoordinator : IDisposable
         if (Busy || disposed) return;
         if (!canInteract()) { if (!manual) Arm(TimeSpan.FromMinutes(2)); return; }
         bool deferred = false;
-        Busy = true; SetStatus("Suche nach Updates …");
+        Busy = true; SetStatus("Checking for updates …");
         try
         {
             state = state with { LastCheckUtc = DateTimeOffset.UtcNow }; storage.Save("update-state.json", state);
             ReleaseInfo release = await client.LatestAsync(cancel.Token);
             if (disposed) return;
-            if (!canInteract()) { deferred = true; SetStatus("Update-Prüfung wird nach dem Schwarzbild fortgesetzt."); return; }
+            if (!canInteract()) { deferred = true; SetStatus("The update check will continue after blackout ends."); return; }
             if (release.Version <= CurrentVersion)
             {
                 state = state with { PendingVersion = null }; installDue = null;
-                SetStatus("Blackveil ist aktuell (" + CurrentVersion + ").");
+                SetStatus("Blackveil is up to date (" + CurrentVersion + ").");
             }
             else
             {
                 if ((state.FailedVersion == release.Version.ToString() || state.FailedVersion == "all") && !manual)
-                { SetStatus("Letztes Update fehlgeschlagen. Bitte über die manuelle Suche erneut versuchen."); return; }
-                SetStatus("Version " + release.Version + " ist verfügbar.");
+                { SetStatus("The last update failed. Use the manual update check to try again."); return; }
+                SetStatus("Version " + release.Version + " is available.");
                 bool eligible = UpdatePolicy.ShouldInstall(Preferences, manual, startup, scheduledInstall);
                 if (!eligible)
                 {
                     if (Preferences.AutoInstall)
                     {
                         state = state with { PendingVersion = release.Version.ToString() };
-                        SetStatus("Update " + release.Version + " wartet auf den gewählten Installationszeitpunkt.");
+                        SetStatus("Update " + release.Version + " is waiting for your chosen installation time.");
                     }
                     else if (!manual)
                     {
                         // Asking is the selected alternative to silent automatic installation.
-                        if (MessageBox.Show($"Blackveil {release.Version} ist verfügbar. Jetzt im Hintergrund installieren und neu starten?\n\n{release.Notes[..Math.Min(6000, release.Notes.Length)]}", "Blackveil – Update", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+                        if (MessageBox.Show($"Blackveil {release.Version} is available. Install in the background and restart now?\n\n{release.Notes[..Math.Min(6000, release.Notes.Length)]}", "Blackveil – Update", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
                             eligible = true;
                     }
                 }
                 else if (!Preferences.AutoInstall)
-                    eligible = MessageBox.Show($"Blackveil {release.Version} ist verfügbar. Jetzt im Hintergrund installieren und neu starten?\n\n{release.Notes[..Math.Min(6000, release.Notes.Length)]}", "Blackveil – Update", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes;
+                    eligible = MessageBox.Show($"Blackveil {release.Version} is available. Install in the background and restart now?\n\n{release.Notes[..Math.Min(6000, release.Notes.Length)]}", "Blackveil – Update", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes;
                 if (eligible)
                 {
                     if (!canInteract()) { deferred = true; state = state with { PendingVersion = release.Version.ToString() }; return; }
                     bool installed = UpdateInstaller.IsInstalled(Environment.ProcessPath!);
                     string directory = Path.Combine(storage.Root, "updates", Guid.NewGuid().ToString("N"));
-                    SetStatus("Update wird heruntergeladen und geprüft …");
+                    SetStatus("Downloading and verifying the update …");
                     string hash = await client.DownloadAsync(release, installed, directory, cancel.Token);
                     if (disposed) return;
                     string package = Path.Combine(directory, installed ? $"Blackveil-Setup-{release.Version}.exe" : "Blackveil.exe");
@@ -121,7 +121,7 @@ internal sealed class UpdateCoordinator : IDisposable
         catch (Exception error)
         {
             Log.Write("Update check/download failed", error);
-            SetStatus("Update nicht möglich: " + error.Message);
+            SetStatus("Update unavailable: " + error.Message);
             // Background failures stay in the status display and local log.
         }
         finally

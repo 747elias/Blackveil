@@ -16,13 +16,13 @@ internal sealed class SettingsStore
             if (!File.Exists(path)) return Shortcut.Default;
             var shortcut = JsonSerializer.Deserialize<Shortcut>(File.ReadAllText(path));
             if (shortcut?.IsValid == true) return shortcut;
-            throw new InvalidDataException("Ungültige Shortcut-Einstellung.");
+            throw new InvalidDataException("Invalid shortcut setting.");
         }
         catch (Exception error) { Log.Write("Settings could not be loaded; using default shortcut", error); return Shortcut.Default; }
     }
     internal void Save(Shortcut shortcut)
     {
-        if (!shortcut.IsValid) throw new ArgumentException("Ungültiger Shortcut.");
+        if (!shortcut.IsValid) throw new ArgumentException("Invalid shortcut.");
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         string temp = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try

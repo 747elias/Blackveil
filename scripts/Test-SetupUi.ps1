@@ -19,6 +19,11 @@ public static class BlackveilSetupUi {
  [DllImport("user32.dll")] public static extern IntPtr SendMessage(IntPtr hwnd, uint message, IntPtr wp, IntPtr lp);
  [StructLayout(LayoutKind.Sequential)] public struct Rect { public int Left,Top,Right,Bottom; }
  public static string Text(IntPtr hwnd) { var b=new StringBuilder(512); GetWindowText(hwnd,b,512);return b.ToString(); }
+ public static string AllText(IntPtr hwnd) {
+  var text=new StringBuilder(Text(hwnd));
+  EnumChildWindows(hwnd,(child,data)=>{text.AppendLine(Text(child).Replace("&",""));return true;},IntPtr.Zero);
+  return text.ToString();
+ }
  public static IntPtr Find() {
   IntPtr found=IntPtr.Zero;
   EnumWindows((hwnd,data)=> { uint pid;GetWindowThreadProcessId(hwnd,out pid);
@@ -27,7 +32,7 @@ public static class BlackveilSetupUi {
   },IntPtr.Zero);return found;
  }
  public static void ConfirmClose(IntPtr hwnd) {
-  EnumChildWindows(hwnd,(child,data)=>{string text=Text(child).Replace("&","");if(text=="Ja"||text=="Yes")SendMessage(child,0xF5,IntPtr.Zero,IntPtr.Zero);return true;},IntPtr.Zero);
+  EnumChildWindows(hwnd,(child,data)=>{string text=Text(child).Replace("&","");if(text=="Yes")SendMessage(child,0xF5,IntPtr.Zero,IntPtr.Zero);return true;},IntPtr.Zero);
  }
 }
 '@
@@ -68,12 +73,15 @@ try {
     [xml]$props = Get-Content Directory.Build.props
     $setup = (Resolve-Path "artifacts/release/Blackveil-Setup-$($props.Project.PropertyGroup.Version).exe").Path
     $scope = Start-Process $setup -PassThru
-    Capture-Window (Wait-Window) 'setup-scope'
+    $scopeWindow = Wait-Window
+    Capture-Window $scopeWindow 'setup-scope'
+    if ([BlackveilSetupUi]::AllText($scopeWindow) -notmatch 'Install for') { throw 'The scope chooser is not in English.' }
     Close-Setup
     [void]$scope.WaitForExit(10000)
     $wizard = Start-Process $setup -ArgumentList '/CURRENTUSER' -PassThru
     $window = Wait-Window
     Capture-Window $window 'setup-welcome'
+    if ([BlackveilSetupUi]::AllText($window) -notmatch 'Your reveal\.') { throw 'The welcome page is not in English.' }
     Close-Setup
     [void]$wizard.WaitForExit(10000)
     Write-Host 'PASS: scope chooser and branded setup welcome screen displayed; screenshots captured without installing.'
